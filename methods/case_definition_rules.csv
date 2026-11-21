@@ -1,0 +1,15 @@
+rule_id,level,description,pattern
+CONF01_cpsc_bicycle_code,confirmed,CPSC product type is a bicycle category,NA
+CONF02_bike_named,confirmed,"Bicycle, e-bike, or tricycle named in title or product name",NA
+CONF03_component_named,confirmed,"Bicycle component named, with bicycle context",NA
+EX00_cpsc_product_type,excluded,CPSC product type is out of scope and not a bicycle category,NA
+EX01_helmet,excluded,Helmets and head protection,\b(helmets?|headgear)\b
+EX02_exercise,excluded,"Exercise, stationary, and indoor bikes",\b(exercise|stationary|spin(ning)? bikes?|indoor cycl\w*|fitness bikes?)\b
+EX03_motorized,excluded,Motorized two-wheelers that are not e-bikes,\b(dirt ?bikes?|mini ?bikes?|pit ?bikes?|motorcycles?|motorbikes?|mopeds?|motocross|ATVs?|off-road vehicles?|go-?karts?)\b
+EX04_micromobility,excluded,"E-scooters, hoverboards, and other micromobility",\b(scooters?|scoot|hoverboards?|self-balancing|unicycles?|skateboards?|morfboard)\b
+EX05_child_passenger,excluded,"Child carriers, child seats, trailers, and strollers",\b(child (bicycle |bike )?(carriers?|seats?)|baby carriers?|(bicycle|bike|child) trailers?|trailers? (and )?conversion kits?|strollers?)\b
+EX06_toy_ride_on,excluded,Toy tricycles and ride-on toys,\b(ride-?ons?|toys?|toddler tricycles?|big wheel)\b|\btricycles?\b.*\b(toddlers?|child|children|kids?)\b|\b(toddlers?|child|children|kids?)('s)?\b.*\btricycles?\b
+EX07_homonym,excluded,Unrelated products sharing a bicycle word,\b(horses?|equestrian|riding saddles?|saddle cinch(es)?|crossbows?|gaming|wireless headsets?|ear force|earbuds?|lawn|trimmers?|edgers?)\b
+NC01_no_bike_reference,not_case,No qualifying bicycle reference,NA
+PROB01_description_only,probable,Bicycle mentioned only in the description,NA
+PROB02_mixed_product,probable,Exclusion pattern matches but a bicycle or e-bike is also named,NA
