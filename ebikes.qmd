@@ -1,0 +1,188 @@
+---
+title: "E-bikes"
+subtitle: "The fastest-changing part of bicycle recalls, and the one regulators are now catching up with."
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+
+haz_levels <- c("Fall or crash", "Fire or burn", "Laceration", "Other")
+
+eb_events <- events |> filter(is_ebike_related)
+n_eb      <- nrow(eb_events)
+first_eb  <- min(eb_events$recall_year)
+
+eb_year <- eb_events |>
+  count(recall_year, hazard_group) |>
+  complete(recall_year = 2000:this_year, hazard_group = haz_levels, fill = list(n = 0))
+
+p5_breaks <- c(1999, 2004, 2009, 2014, 2019, 2024, this_year)
+p5_labels <- c("2000 to 2004", "2005 to 2009", "2010 to 2014", "2015 to 2019",
+               "2020 to 2024", paste0("2025 to ", this_year))
+eb_share <- events |>
+  mutate(period = as.character(cut(recall_year, p5_breaks, labels = p5_labels))) |>
+  group_by(period) |>
+  summarise(all = n(), ebike = sum(is_ebike_related), share = ebike / all, .groups = "drop")
+share_first <- eb_share$share[eb_share$period == "2000 to 2004"]
+share_2020s <- eb_share$share[eb_share$period == "2020 to 2024"]
+share_last  <- eb_share$share[eb_share$period == p5_labels[6]]
+
+comp_cmp <- events |>
+  mutate(group = if_else(is_ebike_related, "E-bike related", "Other bicycle products")) |>
+  count(group, value = failed_component) |>
+  group_by(group) |>
+  mutate(share = n / sum(n)) |>
+  ungroup()
+eb_elec_share <- with(comp_cmp, share[group == "E-bike related" & value == "E-bike electrical system"])
+
+# Recent e-bike fire recalls whose notice names a distributor or an online
+# marketplace rather than a bicycle brand
+eb_fire_recent <- trend |>
+  filter(is_ebike_related, hazard_group == "Fire or burn", recall_year >= 2022) |>
+  distinct(event_id, .keep_all = TRUE)
+n_fire_recent  <- nrow(eb_fire_recent)
+n_fire_channel <- sum(str_detect(eb_fire_recent$title,
+                                 regex("distributed by|sold on amazon|sold online|sold exclusively online",
+                                       ignore_case = TRUE)))
+
+ojs_define(
+  ebYear = eb_year,
+  ebShare = eb_share,
+  compCmp = comp_cmp,
+  emeta = list(thisYear = this_year, hazards = haz_levels, p5 = p5_labels)
+)
+```
+
+```{ojs}
+//| output: false
+em = ({
+  thisYear: [].concat(emeta.thisYear)[0],
+  hazards: [].concat(emeta.hazards),
+  p5: [].concat(emeta.p5)
+})
+hazardColors = ["#2a78d6", "#eb6834", "#1baf7a", "#6250d6"]
+milestones = [
+  {x: 2021.09, label: "1"},
+  {x: 2024.20, label: "2"},
+  {x: 2026.48, label: "3"}
+]
+```
+
+## From rare to routine
+
+The first e-bike recall in these records is from `r first_eb`. For most of the next two decades there were a handful a year at most, and many years had none. Since 2022 e-bike recalls have appeared every year, and `r last_full_year` had more than any year before it. In total, `r n_eb` recall events involve e-bikes, e-bike batteries and chargers, or parts recalled from e-bikes.
+
+```{ojs}
+{
+  const rows = transpose(ebYear);
+  const fig = Plot.plot({
+    width,
+    height: 340,
+    marginLeft: 48,
+    marginTop: 28,
+    x: {label: null, tickFormat: "d", domain: [2000, em.thisYear + 1]},
+    y: {label: "E-bike recall events per year", grid: true},
+    color: {domain: em.hazards, range: hazardColors, legend: true},
+    marks: [
+      Plot.rectY(rows, {
+        x: "recall_year", interval: 1, y: "n", fill: "hazard_group",
+        fillOpacity: d => d.recall_year === em.thisYear ? 0.45 : 1,
+        insetLeft: 1, insetRight: 1,
+        tip: true,
+        title: d => `${d.recall_year}${d.recall_year === em.thisYear ? " (partial year)" : ""}\n${d.hazard_group}: ${d.n}`
+      }),
+      Plot.ruleX(milestones, {x: "x", stroke: "#0b2233", strokeDasharray: "3,3"}),
+      Plot.text(milestones, {x: "x", text: "label", frameAnchor: "top", dy: -14, fontWeight: 700, fill: "#0b2233"}),
+      Plot.ruleY([0])
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+[Dashed lines mark the regulatory milestones listed further down this page. `r this_year` is a partial year, shown paler.]{.dash-note}
+
+As a share of all bicycle recalls, e-bikes went from `r pct(share_first)` in 2000 to 2004 to `r pct(share_2020s)` in 2020 to 2024, and `r pct(share_last)` in `r p5_labels[6]`.
+
+```{ojs}
+{
+  const rows = transpose(ebShare);
+  const fig = Plot.plot({
+    width,
+    height: 260,
+    marginLeft: 48,
+    x: {label: null, domain: em.p5},
+    y: {label: "Share of all recall events", tickFormat: "%", grid: true},
+    marks: [
+      Plot.barY(rows, {
+        x: "period", y: "share", fill: "#1f4e79", insetLeft: 6, insetRight: 6,
+        tip: true,
+        title: d => `${d.period}\n${d.ebike} of ${d.all} recall events (${Math.round(100 * d.share)}%)`
+      }),
+      Plot.ruleY([0])
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+Part of this rise is simply that there are far more e-bikes on the road than there were 20 years ago. These records do not include sales, so they cannot say whether e-bikes are recalled more often per bike sold than conventional bikes.
+
+## What fails on e-bikes
+
+E-bikes inherit every failure a conventional bike can have, and add one of their own. The electrical system (battery, charger, motor, controller, and wiring) accounts for `r pct(eb_elec_share)` of e-bike recall events. The rest are the familiar parts: forks, frames, brakes, wheels, and handlebars, now carrying more weight at higher speeds.
+
+```{ojs}
+{
+  const rows = transpose(compCmp);
+  const groups = ["Other bicycle products", "E-bike related"];
+  const eb = new Map(rows.filter(d => d.group === groups[1]).map(d => [d.value, d.share]));
+  const ot = new Map(rows.filter(d => d.group === groups[0]).map(d => [d.value, d.share]));
+  const cats = [...new Set(rows.map(d => d.value))].sort((a, b) => (eb.get(b) ?? 0) - (eb.get(a) ?? 0));
+  const pairs = cats.map(c => ({value: c, a: ot.get(c) ?? 0, b: eb.get(c) ?? 0}));
+  const fig = Plot.plot({
+    width,
+    height: 420,
+    marginLeft: 250,
+    marginRight: 20,
+    x: {label: "Share of recall events in each group", tickFormat: "%", grid: true},
+    y: {label: null, domain: cats},
+    color: {domain: groups, range: ["#2a78d6", "#eb6834"], legend: true},
+    marks: [
+      Plot.ruleY(pairs, {y: "value", x1: "a", x2: "b", stroke: "#b9c3cb", strokeWidth: 2}),
+      Plot.dot(rows, {
+        x: "share", y: "value", fill: "group", r: 6, stroke: "#ffffff", strokeWidth: 2,
+        tip: true,
+        title: d => `${d.value}\n${d.group}: ${Math.round(100 * d.share)}% (${d.n} events)`
+      })
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+## Battery fires
+
+`r pct(ebike_fire_share)` of e-bike recall events involve a fire or burn hazard, against `r pct(other_fire_share)` of other bicycle recalls. A battery fire is a different kind of hazard from a broken fork: it can start while the bike is charging indoors and unattended, and it can harm people who were never riding.
+
+There is also a pattern in who is recalling. Of the `r n_fire_recent` e-bike fire recalls since 2022, `r n_fire_channel` name a distributor or an online marketplace in the notice rather than a bicycle brand. That fits a wider concern about lower-cost e-bikes sold directly online, but the number is small, and recalls only capture firms that cooperate with a regulator.
+
+## Regulators are catching up
+
+1. **February 2021, Canada.** Transport Canada repealed the federal definition of a power-assisted bicycle in the Motor Vehicle Safety Regulations. Since then, e-bikes have sat between federal vehicle rules, consumer product law, and provincial road rules, which may affect how e-bike problems reach Health Canada. ([Transport Canada](https://tc.canada.ca/en/road-transportation/importing-vehicle/importing-non-regulated-vehicles))
+2. **March 2024, United States.** CPSC published an advance notice of proposed rulemaking on e-bikes, the first step towards mandatory e-bike safety requirements. ([Federal Register](https://www.govinfo.gov/content/pkg/FR-2024-03-15/html/2024-05472.htm))
+3. **June 2026, United States.** CPSC proposed a mandatory safety standard for lithium-ion batteries in e-bikes and other micromobility products, covering batteries, chargers, and conversion kits. ([Federal Register](https://www.federalregister.gov/documents/2026/06/24/2026-12749/safety-standard-for-lithium-ion-batteries-used-in-micromobility-products-and-electrical-systems-of))
+
+Recall counts after a new rule are hard to read. A mandatory standard can raise recalls at first, as non-compliant products are identified, before it lowers them.
+
+::: {.caveat-box}
+**About these numbers.** E-bike recalls are a small series, so a single recall moves any year noticeably. Recall notices rarely state a bike's top speed or motor power, so this project cannot reliably separate e-bikes from faster electric motorbikes sold as e-bikes. Canada's e-bike recall count is very low, which may reflect the regulatory gap described above rather than safer products.
+:::
+
+**Explore further** in the [dashboard](dashboard.qmd): tick "E-bike related only".

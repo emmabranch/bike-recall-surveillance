@@ -1,5 +1,5 @@
 dimension,category,label,pattern
-failed_component,ebike_electrical,E-bike electrical system,\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\w*)\b
+failed_component,ebike_electrical,E-bike electrical system,\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|electrical connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\w*)\b
 failed_component,fork,Fork,\b(forks?|steerers?|steerer tubes?|steer tubes?|steer tube clamps?|steering tubes?|fork crowns?|crown races?)\b
 failed_component,frame,Frame,\b(frames?|framesets?|top ?tubes?|down ?tubes?|head ?tubes?|seat tubes?|seat ?stays?|chain ?stays?|rear triangles?|welds?|swing ?arms?|rear shocks?|shock mounts?|linkages?|dropouts?|folding hinges?|frame hinges?)\b
 failed_component,stem_handlebar,Stem or handlebar,\b(stems?|stem raisers?|handlebars?|handle bars?|handleposts?|handle posts?|steering posts?|aero ?bars?|bar ends?|steering columns?|headsets?)\b

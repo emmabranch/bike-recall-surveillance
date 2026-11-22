@@ -32,7 +32,7 @@ dict_text <- tribble(
   "case_status", "Certainty under case definition v1.3: confirmed or probable. This dataset contains cases only.",
   "case_reason", "ID of the rule that set the case status (see methods/case_definition_rules.csv). 'MANUAL:' marks a documented manual override.",
   "product_form", "What was recalled: Complete bicycle, Complete e-bike, Component, Accessory, E-bike battery, charger, or power part, or Unclear.",
-  "is_ebike_related", "TRUE if the recall involves e-bikes, e-bike parts, or e-bike batteries or chargers, including recalls that mix regular and electric bikes.",
+  "is_ebike_related", "TRUE if the recalled product is an e-bike (including recalls that mix regular and electric bikes), an e-bike battery, charger, or power part, or a component recalled from e-bikes. Accessories made for e-bikes, such as e-bike racks, are not counted.",
   "possible_emoto", "TRUE if e-bike related and the text describes no pedals, a throttle-only design, a speed above 28 mph or 32 km/h, or power above 750 W (US) or 500 W (Canada). Rarely triggered: notices seldom state these specifications.",
   "emoto_evidence", "Text evidence behind possible_emoto.",
   "failed_component", "The part whose failure creates the hazard. For part-only recalls, the recalled part. Compliance problems with no failing part (for example lead paint) are Other or unclear.",

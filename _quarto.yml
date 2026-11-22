@@ -4,6 +4,7 @@ project:
   render:
     - index.qmd
     - trends.qmd
+    - ebikes.qmd
     - dashboard.qmd
   resources:
     - .nojekyll
@@ -22,6 +23,8 @@ website:
         text: Overview
       - href: trends.qmd
         text: Trends
+      - href: ebikes.qmd
+        text: E-bikes
       - href: dashboard.qmd
         text: Dashboard
     right:

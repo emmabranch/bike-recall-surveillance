@@ -1,4 +1,8 @@
-# 06_classify_cases.R  (classification v1.2: "explo" no longer matches product names such as "Explore")
+# 06_classify_cases.R  (classification v1.3)
+# v1.2: "explo" no longer matches product names such as "Explore".
+# v1.3: e-bike flag ignores "non-electric"; batteries without e-bike context are
+#       accessories (e.g. light batteries); accessories made for e-bikes (racks)
+#       are not counted as e-bike related; "connector" alone is not electrical.
 # Purpose: classify each case by product form, failed component, and hazard;
 # extract incidents, injuries, deaths, units, origin, remedy; flag possible e-motos.
 # Reads:  data-interim/candidates_with_status.csv
@@ -28,7 +32,7 @@ cases <- cand |> filter(is_case)
 # ---------------------------------------------------------------------------
 component_rules <- tribble(
   ~category,          ~label,                      ~pattern,
-  "ebike_electrical", "E-bike electrical system",  "\\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\\w*)\\b",
+  "ebike_electrical", "E-bike electrical system",  "\\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|electrical connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\\w*)\\b",
   "fork",             "Fork",                      "\\b(forks?|steerers?|steerer tubes?|steer tubes?|steer tube clamps?|steering tubes?|fork crowns?|crown races?)\\b",
   "frame",            "Frame",                     "\\b(frames?|framesets?|top ?tubes?|down ?tubes?|head ?tubes?|seat tubes?|seat ?stays?|chain ?stays?|rear triangles?|welds?|swing ?arms?|rear shocks?|shock mounts?|linkages?|dropouts?|folding hinges?|frame hinges?)\\b",
   "stem_handlebar",   "Stem or handlebar",         "\\b(stems?|stem raisers?|handlebars?|handle bars?|handleposts?|handle posts?|steering posts?|aero ?bars?|bar ends?|steering columns?|headsets?)\\b",
@@ -194,22 +198,25 @@ cases <- cases |>
                          last_mention(product_text, component_rules)),
     term_in_head = !is.na(last_mention(head_core, component_rules)) | has(head_core, generic_parts_pat),
     is_complete  = has(head_core, complete_pat) | (!term_in_head & has(name_text, complete_pat)),
-    is_ebike_any = has(name_text, ebike_pat) | has(description_text, ebike_pat),
+    is_ebike_any = has(str_remove_all(coalesce(name_text, ""), rx("non-?\\s?electric")), ebike_pat) |
+                   has(str_remove_all(coalesce(description_text, ""), rx("non-?\\s?electric")), ebike_pat),
     product_form = case_when(
       is_complete & is_ebike_any                      ~ "Complete e-bike",
       is_complete                                     ~ "Complete bicycle",
-      head_cat == "ebike_electrical"                  ~ "E-bike battery, charger, or power part",
+      head_cat == "ebike_electrical" & is_ebike_any   ~ "E-bike battery, charger, or power part",
+      head_cat == "ebike_electrical"                  ~ "Accessory",
       head_cat == "accessory"                         ~ "Accessory",
       !is.na(head_cat)                                ~ "Component",
       has(head_core, generic_parts_pat)               ~ "Component",
       TRUE                                            ~ "Unclear"
     ),
     is_ebike_related = product_form %in% c("Complete e-bike", "E-bike battery, charger, or power part") |
-      is_ebike_any,
+      (is_ebike_any & product_form == "Component"),
     hazard_comp_cat = first_mention(hazard_text, component_rules),
     name_comp_cat   = first_mention(name_text, component_rules),
     failed_cat = case_when(
       hazard_detail == "chemical_lead"                              ~ "other",
+      product_form == "Accessory"                                   ~ "accessory",
       product_form %in% c("Component", "Accessory",
                           "E-bike battery, charger, or power part") ~ coalesce(head_cat, "other"),
       has(hazard_text, foot_brake_pat)                              ~ "brakes",
