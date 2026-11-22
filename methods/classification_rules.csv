@@ -1,0 +1,21 @@
+dimension,category,label,pattern
+failed_component,ebike_electrical,"E-bike battery, charger, or motor",\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\w*)\b
+failed_component,fork,Fork,\b(forks?|steerers?|steerer tubes?|steering tubes?|fork crowns?|crown races?)\b
+failed_component,frame,Frame,\b(frames?|framesets?|top ?tubes?|down ?tubes?|head ?tubes?|seat tubes?|seat ?stays?|chain ?stays?|rear triangles?|welds?|swing ?arms?|rear shocks?|shock mounts?|linkages?|dropouts?|folding hinges?|frame hinges?)\b
+failed_component,stem_handlebar,Stem or handlebar,\b(stems?|stem raisers?|handlebars?|handle bars?|handleposts?|handle posts?|steering posts?|aero ?bars?|bar ends?|steering columns?|headsets?)\b
+failed_component,brakes,Brakes,\b(brakes?|braking|foot ?brakes?|hand ?brakes?|coaster brakes?|calipers?|brake levers?|brake pads?|brake cables?|brake hoses?|rotors?|master cylinders?)\b
+failed_component,wheels_hubs,"Wheels, hubs, or tires",\b(wheels?|wheelsets?|rims?|spokes?|hubs?|axles?|quick[- ]releases?|skewers?|thru[- ]axles?|tires?|tyres?|inner tubes?|valves?|freehubs?)\b
+failed_component,drivetrain,Drivetrain or pedals,\b(cranks?|crank ?arms?|cranksets?|chainrings?|chains?|cassettes?|freewheels?|derailleurs?|derailleur hangers?|bottom brackets?|pedals?|pedal axles?|spindles?|shifters?|shift levers?|gears?|gear hubs?|belts?|belt drives?|sprockets?|cogs?)\b
+failed_component,seat_seatpost,Saddle or seatpost,\b(seat ?posts?|saddles?|seats?|seat clamps?|saddle rails?|seat rails?)\b
+failed_component,accessory,Accessory,\b(lights?|lamps?|headlights?|taillights?|locks?|bags?|panniers?|racks?|carriers?|hooks?|hitch(es)?|adaptor bars?|adapter bars?|cradles?|pumps?|bells?|fenders?|mudguards?|kickstands?|baskets?|reflectors?|computers?|mounts?|brackets?|hoists?|straps?|bottle cages?|trainers?|flywheels?|grips?|keys?)\b
+hazard,fire_burn,Fire or burn,\b(fire|burns?|burning|overheat\w*|thermal runaway|smok\w*|flames?|explo\w*|ignit\w*)\b
+hazard,fall_crash,Fall or crash,\b(falls?|falling|crash\w*|loss of control|lose control|losing control|collisions?|thrown|eject\w*)\b
+hazard,laceration,Laceration,\b(lacerat\w*|cuts?|amputat\w*|sharp edges?)\b
+hazard,entrapment_pinch,Other,\b(entrap\w*|pinch\w*|crush\w*|strangulat\w*|fingertips?)\b
+hazard,choking_ingestion,Other,\b(chok\w*|ingest\w*|swallow\w*|aspirat\w*)\b
+hazard,chemical_lead,Other,\b(lead paint|lead content|lead levels?|excessive lead|lead poisoning|leaded|federal lead|phthalates?|chemical|toxic)\b
+hazard,electrical_shock,Other,\b(electric(al)? shock|shock hazard|electrocut\w*)\b
+product_form,complete,Bike word used as the product,"\b(e-?bikes|ebikes|bicycles|bikes|tricycles|trikes|pedelecs)\b|\b(e-?bike|ebike|bicycle|bike|tricycle|trike|pedelec)\b(?=\s*($|recalled|recall|due|with|equipped|and|sold|from|for|by|[(;,:.]))"
+product_form,ebike,E-bike terms,\b(e-?bikes?|ebikes?|electric (bicycles?|bikes?|tricycles?|trikes?|cargo bikes?)|e-?trikes?|pedal[- ]assist(ed)?|pedelecs?|power[- ]assisted bicycles?|electric[- ]assist|motori[sz]ed bicycles?)\b
+special,foot_brake,Missing foot brake or coaster brake codes as Brakes,\b(foot ?brakes?|coaster brakes?)\b
+special,death,Death mentioned,\b(died|deaths?|fatal\w*|killed)\b

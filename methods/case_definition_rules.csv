@@ -1,15 +1,21 @@
 rule_id,level,description,pattern
+ACCESSORY_TERMS,term_list,Bicycle accessory terms,\b(locks?|lights?|lamps?|headlights?|taillights?|pumps?|bags?|panniers?|bells?|computers?|racks?|carriers?|hooks?|hoists?|brackets?|mounts?|kickstands?|fenders?|mudguards?|baskets?|bottle cages?|trainers?|stands?|reflectors?|grips?|straps?)\b
+COMPONENT_TERMS,term_list,Bicycle component terms,\b(derailleurs?|cranks?(sets?|arms?)?|chainrings?|chains?|cassettes?|freewheels?|handlebars?|stems?|seat ?posts?|saddles?|forks?|suspension|shocks?|frames?|framesets?|wheels?|wheelsets?|hubs?|rims?|spokes?|tires?|tyres?|inner tubes?|brakes?|brake (levers?|calipers?|rotors?)|shifters?|shift levers?|pedals?|quick[- ]release|bottom brackets?|headsets?)\b
 CONF01_cpsc_bicycle_code,confirmed,CPSC product type is a bicycle category,NA
-CONF02_bike_named,confirmed,"Bicycle, e-bike, or tricycle named in title or product name",NA
+CONF02_bike_named,confirmed,"Bicycle, e-bike, or tricycle named in product phrase or product name",NA
 CONF03_component_named,confirmed,"Bicycle component named, with bicycle context",NA
+EBIKE_PART_TERMS,term_list,E-bike part terms,\b(batter(y|ies)|battery packs?|chargers?|motors?|controllers?|conversion kits?|throttles?)\b
 EX00_cpsc_product_type,excluded,CPSC product type is out of scope and not a bicycle category,NA
 EX01_helmet,excluded,Helmets and head protection,\b(helmets?|headgear)\b
-EX02_exercise,excluded,"Exercise, stationary, and indoor bikes",\b(exercise|stationary|spin(ning)? bikes?|indoor cycl\w*|fitness bikes?)\b
-EX03_motorized,excluded,Motorized two-wheelers that are not e-bikes,\b(dirt ?bikes?|mini ?bikes?|pit ?bikes?|motorcycles?|motorbikes?|mopeds?|motocross|ATVs?|off-road vehicles?|go-?karts?)\b
+EX02_exercise,excluded,"Exercise, stationary, and indoor bikes, and fitness equipment",\b(exercise|stationary|spin(ning)? bikes?|indoor cycl\w*|fitness bikes?|fitness equipment|treadmills?|ellipticals?)\b
+EX03_motorized,excluded,Motorized two-wheelers that are not e-bikes,\b(dirt ?bikes?|mini ?bikes?|pit ?bikes?|snow ?bikes?|snowmx|motorcycles?|motorbikes?|mopeds?|motocross|ATVs?|off-road vehicles?|go-?karts?)\b
 EX04_micromobility,excluded,"E-scooters, hoverboards, and other micromobility",\b(scooters?|scoot|hoverboards?|self-balancing|unicycles?|skateboards?|morfboard)\b
 EX05_child_passenger,excluded,"Child carriers, child seats, trailers, and strollers",\b(child (bicycle |bike )?(carriers?|seats?)|baby carriers?|(bicycle|bike|child) trailers?|trailers? (and )?conversion kits?|strollers?)\b
-EX06_toy_ride_on,excluded,Toy tricycles and ride-on toys,\b(ride-?ons?|toys?|toddler tricycles?|big wheel)\b|\btricycles?\b.*\b(toddlers?|child|children|kids?)\b|\b(toddlers?|child|children|kids?)('s)?\b.*\btricycles?\b
-EX07_homonym,excluded,Unrelated products sharing a bicycle word,\b(horses?|equestrian|riding saddles?|saddle cinch(es)?|crossbows?|gaming|wireless headsets?|ear force|earbuds?|lawn|trimmers?|edgers?)\b
+EX06_toy_ride_on,excluded,Toy tricycles and ride-on toys,\b(ride-?on (toys?|vehicles?|cars?)|ride-?ons|toys?|toddler tricycles?|big wheel)\b|\btricycles?\b.*\b(toddlers?|child|children|kids?)\b|\b(toddlers?|child|children|kids?)('s)?\b.*\btricycles?\b
+EX07_homonym,excluded,Unrelated products sharing a bicycle word (never overrides an explicit bicycle word),\b(horses?|equestrian|riding saddles?|saddle cinch(es)?|crossbows?|firearms?|guns?|gaming|wireless headsets?|ear force|earbuds?|lawn|trimmers?|edgers?)\b
+EX08_maintenance_chemical,excluded,"Maintenance chemicals: degreasers, lubricants, cleaners, sealants",\b(degreasers?|lubricants?|lubes?|chain oils?|cleaners?|solvents?|polish(es)?|sealants?)\b
 NC01_no_bike_reference,not_case,No qualifying bicycle reference,NA
-PROB01_description_only,probable,Bicycle mentioned only in the description,NA
-PROB02_mixed_product,probable,Exclusion pattern matches but a bicycle or e-bike is also named,NA
+NC02_incidental_mention,not_case,"Bicycle mentioned only in the description, no bicycle product named",NA
+PROB01_part_or_accessory,probable,"E-bike part or bicycle accessory named, with bicycle context",NA
+PROB02_mixed_product,probable,Motorized or micromobility pattern matches but a bicycle or e-bike is also named,NA
+PROB03_sports_context,probable,Bicycle mentioned only in the description of a Health Canada sports and fitness notice,NA
