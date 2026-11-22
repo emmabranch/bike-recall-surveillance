@@ -1,0 +1,169 @@
+---
+title: "Methods"
+subtitle: "How the data were collected, defined, classified, and checked."
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+library(knitr)
+library(purrr)
+
+cand_path <- here("data-interim", "candidates_with_status.csv")
+cand <- read_csv(cand_path, col_types = cols(source_id = col_character(),
+                                             linked_cpsc_id = col_character(),
+                                             .default = col_guess()),
+                 guess_max = 5000)
+
+flow <- cand |>
+  mutate(status = factor(case_status, levels = c("confirmed", "probable", "excluded", "not_case"))) |>
+  count(source, status) |>
+  pivot_wider(names_from = source, values_from = n, values_fill = 0) |>
+  mutate(Total = `Health Canada` + `US CPSC`)
+
+n_overrides <- nrow(read_csv(here("methods", "manual_overrides.csv"), show_col_types = FALSE))
+n_links_manual <- nrow(read_csv(here("methods", "manual_links.csv"), show_col_types = FALSE))
+links <- cand |> filter(source == "Health Canada") |> count(link_method)
+link_n <- function(m) sum(links$n[links$link_method %in% m])
+
+# Validation results
+dev_r1  <- read_csv(here("validation", "validation_results_round1.csv"), show_col_types = FALSE) |>
+  mutate(label_set = "original")
+dev     <- read_csv(here("validation", "validation_results.csv"), show_col_types = FALSE)
+hold    <- read_csv(here("validation", "holdout_results.csv"), show_col_types = FALSE)
+
+cell <- function(df, m, set = "original") {
+  r <- df |> filter(measure == m, label_set == set)
+  if (nrow(r) == 0) return("")
+  if (str_detect(m, "kappa")) sprintf("%.2f (%.2f to %.2f)", r$estimate, r$lower, r$upper)
+  else sprintf("%s (%s to %s)", pct(r$estimate), pct(r$lower), pct(r$upper))
+}
+
+measures <- c(
+  "Case definition: positive predictive value" = "Case definition PPV",
+  "Case definition: negative predictive value" = "Case definition NPV",
+  "Case definition: sensitivity (weighted)"    = "Case definition sensitivity (weighted)",
+  "Case definition: specificity (weighted)"    = "Case definition specificity (weighted)",
+  "What was recalled: accuracy"                = "product_form accuracy",
+  "What was recalled: kappa"                   = "product_form kappa",
+  "Failed part: accuracy"                      = "failed_component accuracy",
+  "Failed part: kappa"                         = "failed_component kappa",
+  "Hazard: accuracy"                           = "hazard_group accuracy",
+  "Hazard: kappa"                              = "hazard_group kappa"
+)
+
+val_table <- tibble(
+  Measure = names(measures),
+  `Development, first rules` = map_chr(measures, function(m) cell(dev_r1, m)),
+  `Development, final rules` = map_chr(measures, function(m) cell(dev, m)),
+  `Holdout` = map_chr(measures, function(m) cell(hold, m)),
+  `Holdout, adjudicated` = map_chr(measures, function(m) cell(hold, m, "adjudicated"))
+)
+
+hold_fc  <- hold |> filter(measure == "failed_component accuracy", label_set == "original")
+dev_fc   <- dev  |> filter(measure == "failed_component accuracy", label_set == "original")
+
+dict <- read_csv(here("data", "data_dictionary.csv"), show_col_types = FALSE)
+```
+
+## In brief
+
+- **Sources:** every recall notice from the US Consumer Product Safety Commission (CPSC) Recalls API, and every consumer product recall from Health Canada's Recalls and Safety Alerts open data, plus each Health Canada recall page.
+- **Case definition:** written rules select bicycle, e-bike, component, and accessory recalls, and exclude helmets, exercise bikes, motorbikes, scooters, child carriers, toys, and maintenance chemicals.
+- **Linking:** joint US and Canadian recalls are linked so each counts once.
+- **Classification:** rules code what was recalled, the part that failed, and the hazard.
+- **Validation:** 100 records labelled by hand to develop the rules, and 40 more held back as an independent test.
+- **Reproducibility:** everything runs from R scripts in the [GitHub repository](https://github.com/emmabranch/bike-recall-surveillance), and every manual decision is recorded with a reason.
+
+## 1. Data sources
+
+| Source | What was used | Coverage on this site |
+|---|---|---|
+| [US CPSC Recalls API](https://www.cpsc.gov/Recalls/CPSC-Recalls-Application-Program-Interface-API-Information) | All recall records (title, description, products, hazards, injuries, remedies, units, country of manufacture) | Trends from 2000 |
+| [Health Canada Recalls and Safety Alerts](https://open.canada.ca/data/en/dataset/d38de914-c94c-429b-8ab1-8776c31643e3) | Consumer product recalls from the open data file, plus each recall's web page for its date, description, hazard, units sold, and place of origin | Trends from 2008 |
+
+Data were downloaded in November 2026. Records up to `r format(max(recalls$recall_date), "%d %B %Y")` are included.
+
+## 2. Case definition
+
+The full case definition, version 1.3, is in [`methods/case-definition.md`](https://github.com/emmabranch/bike-recall-surveillance/blob/main/methods/case-definition.md), with every rule pattern in [`case_definition_rules.csv`](https://github.com/emmabranch/bike-recall-surveillance/blob/main/methods/case_definition_rules.csv). In short:
+
+- A broad keyword and product-code search found candidate records in each source.
+- Exclusion rules removed out-of-scope products, matching only the product name, because descriptions often mention bicycles in passing.
+- Remaining records were marked **confirmed** (a bicycle product code, or a bicycle or component named) or **probable** (an accessory or e-bike part with bicycle context). Both count as cases.
+- `r n_overrides` records were settled by documented manual review.
+
+```{r flow}
+kable(flow |> rename(Status = status), caption = "Candidate records by source and case status")
+```
+
+## 3. Linking joint recalls
+
+Many recalls are announced in both countries. Canadian notices were linked to US notices in three stages: an exact match on the Health Canada web address listed in the US record (`r link_n("url")` notices), a match on recall date (within 14 days) and product-name similarity (`r link_n("date_and_name")`), and manual review (`r link_n("manual")`). Linked notices share an event ID and count once in combined totals.
+
+## 4. Classification
+
+Each case was coded on three questions:
+
+- **What was recalled:** complete bicycle, complete e-bike, component, accessory, or e-bike battery, charger, or power part.
+- **What failed:** fork, frame, stem or handlebar, brakes, wheels, hubs, or tires, drivetrain or pedals, saddle or seatpost, e-bike electrical system, accessory, or other.
+- **Hazard:** fall or crash, fire or burn, laceration, or other (with a finer detail field).
+
+For whole bikes, the failed part is the first part named in the hazard text ("The fork's steerer tube can crack..."). For parts recalled on their own, it is the part itself. Every pattern is in [`classification_rules.csv`](https://github.com/emmabranch/bike-recall-surveillance/blob/main/methods/classification_rules.csv).
+
+The rules were refined in four versions. Each fix came from a specific error:
+
+- **"Bicycle Forks" counted as whole bikes.** The rule looking for a bike word followed by "for" or "by" matched the start of "Forks". Fixing it raised accuracy for what was recalled from 82% to 95% in the development sample.
+- **A bike carrier called the "Explore" counted as a fire hazard,** because "explo" was meant to catch "explosion".
+- **"Non-Electric" bikes counted as e-bikes,** and a chain "connector" counted as an electrical part.
+- **The "Ride-On" brand of brake cables was excluded as a ride-on toy.**
+
+## 5. Validation
+
+Two samples were labelled by hand, without seeing the rules' answers:
+
+- **Development sample (100 records):** used to find and fix errors in the rules. Its figures are optimistic, because the rules were tuned on it.
+- **Holdout sample (40 records):** drawn after the rules were frozen and never used to change them. **These are the figures to rely on.**
+
+Both samples were stratified (e-bike cases, other cases, and non-cases), and weighted figures are scaled back to the full dataset. Intervals are 95% Wilson intervals for proportions and stratified bootstrap intervals for weighted figures and kappa. "Adjudicated" figures correct labelling slips found on review, each recorded with a reason in [`validation/`](https://github.com/emmabranch/bike-recall-surveillance/tree/main/validation).
+
+```{r validation}
+kable(val_table, caption = "Agreement between the rules and hand labels (estimate and 95% interval)")
+```
+
+The holdout is the honest test. Accuracy for the failed part fell from `r pct(dev_fc$estimate)` in development to `r pct(hold_fc$estimate)` on the holdout, which is the usual cost of tuning rules on one sample. The hazard kappa has a very wide interval because almost every recall is a fall hazard, so the few disagreements carry great weight; accuracy is the more useful figure there.
+
+**Where people and rules disagreed.** Most remaining disagreements are genuinely ambiguous: a fender bolt that affects the wheel, a quick release that interferes with a disc brake, rear bolts recalled on complete e-bikes. Two come from 1990s records whose hazard field says only "Fall" or "Vehicle Accident", which gives the rules nothing to work with. One raised a fair point about the categories themselves: a bike falling off a wall hook onto someone nearby is a hazard, but not really a rider's "fall or crash".
+
+The validation was done by the author, who also wrote the rules. A review by an independent domain expert is planned.
+
+## 6. Signal detection
+
+US notices only. For each series and year from 2005, the expected count is the mean of the five previous years, and Poisson 95th and 99th percentiles set the Watch and Signal thresholds, with a minimum of three recalls. The current year is compared year-to-date. Details are on the [Signals](signals.qmd) page.
+
+## 7. Data dictionary
+
+```{r dictionary}
+kable(dict |> transmute(Variable = paste0("`", variable, "`"), Type = type, Description = description,
+                        `% complete` = pct_complete),
+      caption = "Columns in bike_recalls.csv")
+```
+
+## 8. Downloads
+
+- [`bike_recalls.csv`](data/bike_recalls.csv): one row per recall notice (cases only)
+- [`bike_recalls.parquet`](data/bike_recalls.parquet): the same data with dates and logical columns preserved
+- [`data_dictionary.csv`](data/data_dictionary.csv): every column, with descriptions and completeness
+
+To count recalls across both countries, count distinct `event_id` values. For trends, filter to `in_trend_window`.
+
+## 9. Data credits and licences
+
+::: {.source-list}
+- US Consumer Product Safety Commission, Recalls API (saferproducts.gov). US government work, public domain. Accessed November 2026.
+- Health Canada, Recalls and Safety Alerts (open.canada.ca and recalls-rappels.canada.ca). Contains information licensed under the Open Government Licence – Canada. Accessed November 2026.
+- Code: MIT licence. Data keep their original licences.
+:::
+
+This is an independent project using public data. It is not affiliated with or endorsed by the US Consumer Product Safety Commission, Health Canada, or any company named in the records. Brand names appear only as published in the official notices.
+
+**Cite as:** Branch, E. (2026). *Bike recall surveillance: bicycle, e-bike, and component recalls in the United States and Canada* (version 1.0). https://emmabranch.github.io/bike-recall-surveillance/

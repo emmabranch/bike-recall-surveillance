@@ -1,0 +1,69 @@
+---
+title: "Caveats"
+subtitle: "What recall data can and cannot tell you, read the way an epidemiologist reads passive surveillance data."
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+
+n_us   <- sum(trend$country == "United States")
+n_ca   <- sum(trend$country == "Canada")
+share_joint_ca <- mean(!is.na(trend$linked_cpsc_id[trend$country == "Canada"]))
+```
+
+Every chart on this site counts **recall notices**. Recalls are a useful signal, but they are produced by a reporting system, and that system has its own habits. These are the main ones to keep in mind.
+
+## 1. A recall is not an injury
+
+A recall shows that a company and a regulator acted on a safety problem. It does not show how many people were hurt, how badly, or how often. Some recalls follow serious injuries, and many are issued before anyone is hurt. Injury data, such as emergency department surveillance, would answer different questions and is not part of this project.
+
+## 2. Reporting is passive and negotiated
+
+In both countries, most recalls are voluntary: a company finds or is told about a problem and agrees a recall with the regulator. That means the count depends on:
+
+- **company behaviour:** how carefully firms test, monitor complaints, and report;
+- **regulator priorities:** where staff time and attention go in a given year;
+- **cooperation:** firms that do not cooperate, or that sell from outside the country, may never appear as recalls at all.
+
+This matters for interpreting companies too. A brand with several recalls may simply be one that monitors its products closely and acts quickly. That is one reason this site never ranks or compares companies.
+
+## 3. There is no denominator
+
+The number of bikes sold, the number of models on the market, and how far people ride all changed over this period, and none of them are measured here. A rise in e-bike recalls is at least partly a rise in e-bikes. Without sales or exposure data, these counts describe regulatory activity, not risk per bike or per kilometre.
+
+## 4. Rules and regulators change
+
+Counts can change because the rules changed, not because products did:
+
+- **Canada, February 2021.** The federal definition of a power-assisted bicycle was repealed, leaving e-bikes between vehicle rules, consumer product law, and provincial road rules. Canada's very low e-bike recall count may partly reflect this.
+- **United States, 2024 onward.** CPSC began rulemaking on e-bikes in 2024 and proposed a mandatory lithium-ion battery standard for micromobility products in June 2026. New standards often raise recall counts at first, as non-compliant products are identified.
+- **Children's product rules.** Several recalls are for lead paint or missing foot brakes on children's bikes. These reflect compliance checks against specific regulations, rather than parts failing in use.
+
+## 5. Canada and the United States are not directly comparable
+
+- **Different start dates.** US records here run from 2000 (`r fmt(n_us)` notices in the trend window). Canadian records start in 2008 (`r fmt(n_ca)` notices), because earlier online coverage is sparse.
+- **Joint recalls.** About `r pct(share_joint_ca)` of Canadian notices are linked to a US notice for the same recall. The site counts these once as a single recall event, but some joint notices could not be matched and may be counted twice.
+- **Different records.** Health Canada's open data has no product descriptions or recall dates, so both were read from each recall's web page. Health Canada also changed its identification numbers over time, so two notices can share an ID.
+- **Different units.** US notices usually count units sold in the US, and Canadian notices count units sold in Canada.
+- **Population size.** Canada has about one-eighth of the US population, so its yearly counts are small and noisy.
+
+## 6. The classification is good, not perfect
+
+Each recall was sorted by rules that read the notice text. Checked against 140 hand-labelled records, the rules agree with a person most of the time, but not always (see [Methods](methods.qmd) for the figures). The main weak points are:
+
+- **old US records** from the 1970s to 1990s, where the hazard field often says only "Fall" or "Vehicle Accident";
+- **ambiguous notices,** such as a fender bolt that affects the wheel, or a quick release that interferes with a disc brake;
+- **e-bikes versus electric motorbikes:** notices rarely state top speed or motor power, so faster electric two-wheelers sold as e-bikes cannot be reliably separated out;
+- **"Fall or crash"** mostly means a rider falling, but it also covers things like a bike falling off a wall hook onto someone nearby.
+
+## 7. Numbers pulled from text are incomplete
+
+Counts of incidents, injuries, and units are read from each notice's text. A blank means the notice did not state a number, not that the number was zero. No notice in these records states a death count in a form that could be read reliably.
+
+## 8. Recall dates are not manufacturing dates
+
+A recall is dated when it is announced. The products involved may have been made and sold years earlier, so a recall in one year can reflect design and manufacturing decisions from several years before.
+
+## 9. Signals are prompts, not conclusions
+
+The [Signals](signals.qmd) page flags years when a count is unusually high for its own history. With hundreds of comparisons, a few flags are expected by chance, and real changes in regulation or reporting can also trigger them. Each flag is a reason to read the recalls behind it.

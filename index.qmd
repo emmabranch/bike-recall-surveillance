@@ -77,5 +77,5 @@ cat(sprintf('<div class="finding-grid">
 ```
 
 ::: {.caveat-box}
-**Recalls are not injuries.** A recall shows that a regulator and a company acted on a problem, not how many people were hurt. There is no count of bikes sold, so these figures cannot be read as risk. More pages, including the full surveillance caveats, are on the way.
+**Recalls are not injuries.** A recall shows that a regulator and a company acted on a problem, not how many people were hurt. There is no count of bikes sold, so these figures cannot be read as risk. Read the full [surveillance caveats](caveats.qmd) and [methods](methods.qmd).
 :::

@@ -25,7 +25,7 @@
     "href": "index.html#key-findings",
     "title": "Bike recalls, read like surveillance data. Which parts fail, which hazards follow, and what is changing.",
     "section": "Key findings",
-    "text": "Key findings\n\n\n\nFalls dominate\n\n\n91% of recall events involve a fall or crash hazard. Fire, laceration, and chemical hazards together make up the rest.\n\n\n\n\nForks fail most often\n\n\n22% of events trace back to the fork, ahead of stems and handlebars, wheels and hubs, and frames.\n\n\n\n\nE-bike recalls are rising\n\n\nThere were 18 e-bike recall events in 2023 to 2025, against 9 in the three years before. Some of that may reflect growth in e-bike sales, which these data cannot measure.\n\n\n\n\nE-bikes bring fire\n\n\n25% of e-bike recall events involve a fire or burn hazard, against 2% of other bicycle recalls, mostly from batteries and chargers.\n\n\n\n\nRecalls are not injuries. A recall shows that a regulator and a company acted on a problem, not how many people were hurt. There is no count of bikes sold, so these figures cannot be read as risk. More pages, including the full surveillance caveats, are on the way."
+    "text": "Key findings\n\n\n\nFalls dominate\n\n\n91% of recall events involve a fall or crash hazard. Fire, laceration, and chemical hazards together make up the rest.\n\n\n\n\nForks fail most often\n\n\n22% of events trace back to the fork, ahead of stems and handlebars, wheels and hubs, and frames.\n\n\n\n\nE-bike recalls are rising\n\n\nThere were 17 e-bike recall events in 2023 to 2025, against 7 in the three years before. Some of that may reflect growth in e-bike sales, which these data cannot measure.\n\n\n\n\nE-bikes bring fire\n\n\n24% of e-bike recall events involve a fire or burn hazard, against 2% of other bicycle recalls, mostly from batteries and chargers.\n\n\n\n\nRecalls are not injuries. A recall shows that a regulator and a company acted on a problem, not how many people were hurt. There is no count of bikes sold, so these figures cannot be read as risk. Read the full surveillance caveats and methods."
   },
   {
     "objectID": "dashboard.html#which-parts-cause-which-hazards",
@@ -152,5 +152,152 @@
     "title": "Signals",
     "section": "One series over time",
     "text": "One series over time\n\nviewof chosen = Inputs.select(sm.series, {label: \"Series\", value: \"All bicycle recalls\"})\n\n\n\n\n\n\n\n{\n  const d = rows.filter(r =&gt; r.name === chosen && !r.is_ytd);\n  const fig = Plot.plot({\n    width: Math.min(width, 860),\n    height: 320,\n    marginLeft: 48,\n    x: {label: null, tickFormat: \"d\"},\n    y: {label: \"US recall notices per year\", grid: true},\n    marks: [\n      Plot.areaY(d, {x: \"year\", y1: 0, y2: \"limit99\", fill: \"#e8edf1\", curve: \"step\"}),\n      Plot.lineY(d, {x: \"year\", y: \"limit95\", stroke: \"#9aa5ae\", strokeDasharray: \"4,3\", curve: \"step\"}),\n      Plot.lineY(d, {x: \"year\", y: \"expected\", stroke: \"#5b7083\", strokeWidth: 1.5}),\n      Plot.lineY(d, {x: \"year\", y: \"observed\", stroke: \"#1f4e79\", strokeWidth: 2}),\n      Plot.dot(d, {\n        x: \"year\", y: \"observed\", r: d =&gt; d.status === \"Expected\" ? 3.5 : 6,\n        fill: d =&gt; d.status === \"Signal\" ? \"#c0392b\" : d.status === \"Watch\" ? \"#e3a400\" : \"#1f4e79\",\n        stroke: \"#ffffff\", strokeWidth: 1.5,\n        tip: true,\n        title: d =&gt; `${d.year}: ${d.observed} observed, ${fmt1(d.expected)} expected\\nWatch above ${d.limit95}, Signal above ${d.limit99}\\n${d.status}`\n      }),\n      Plot.ruleY([0])\n    ]\n  });\n  const wrap = html`&lt;div class=\"dash-chart\"&gt;&lt;/div&gt;`;\n  wrap.append(fig);\n  return wrap;\n}\n\n\n\n\n\n\n\nhtml`&lt;p class=\"dash-note\"&gt;Dark line and dots: observed. Grey line: expected (five-year average). Dashed line: Watch threshold. Shaded area: up to the Signal threshold. Larger amber or red dots are Watches and Signals. The year-to-date figure for ${sm.thisYear} is in the table above, not on this chart, because it covers only part of a year.&lt;/p&gt;`\n\n\n\n\n\n\n\nWhat a signal means here. A signal says a count is unusual for that series, not that products have become less safe. Recalls rise when a regulator focuses on a product type, when a new standard is introduced, or when one large company recalls several models at once. Each signal is a prompt to read the recalls behind it in the dashboard."
+  },
+  {
+    "objectID": "methods.html",
+    "href": "methods.html",
+    "title": "Methods",
+    "section": "",
+    "text": "Sources: every recall notice from the US Consumer Product Safety Commission (CPSC) Recalls API, and every consumer product recall from Health Canada’s Recalls and Safety Alerts open data, plus each Health Canada recall page.\nCase definition: written rules select bicycle, e-bike, component, and accessory recalls, and exclude helmets, exercise bikes, motorbikes, scooters, child carriers, toys, and maintenance chemicals.\nLinking: joint US and Canadian recalls are linked so each counts once.\nClassification: rules code what was recalled, the part that failed, and the hazard.\nValidation: 100 records labelled by hand to develop the rules, and 40 more held back as an independent test.\nReproducibility: everything runs from R scripts in the GitHub repository, and every manual decision is recorded with a reason."
+  },
+  {
+    "objectID": "methods.html#in-brief",
+    "href": "methods.html#in-brief",
+    "title": "Methods",
+    "section": "",
+    "text": "Sources: every recall notice from the US Consumer Product Safety Commission (CPSC) Recalls API, and every consumer product recall from Health Canada’s Recalls and Safety Alerts open data, plus each Health Canada recall page.\nCase definition: written rules select bicycle, e-bike, component, and accessory recalls, and exclude helmets, exercise bikes, motorbikes, scooters, child carriers, toys, and maintenance chemicals.\nLinking: joint US and Canadian recalls are linked so each counts once.\nClassification: rules code what was recalled, the part that failed, and the hazard.\nValidation: 100 records labelled by hand to develop the rules, and 40 more held back as an independent test.\nReproducibility: everything runs from R scripts in the GitHub repository, and every manual decision is recorded with a reason."
+  },
+  {
+    "objectID": "methods.html#data-sources",
+    "href": "methods.html#data-sources",
+    "title": "Methods",
+    "section": "1. Data sources",
+    "text": "1. Data sources\n\n\n\nSource\nWhat was used\nCoverage on this site\n\n\n\n\nUS CPSC Recalls API\nAll recall records (title, description, products, hazards, injuries, remedies, units, country of manufacture)\nTrends from 2000\n\n\nHealth Canada Recalls and Safety Alerts\nConsumer product recalls from the open data file, plus each recall’s web page for its date, description, hazard, units sold, and place of origin\nTrends from 2008\n\n\n\nData were downloaded in November 2026. Records up to 12 November 2026 are included."
+  },
+  {
+    "objectID": "methods.html#case-definition",
+    "href": "methods.html#case-definition",
+    "title": "Methods",
+    "section": "2. Case definition",
+    "text": "2. Case definition\nThe full case definition, version 1.3, is in methods/case-definition.md, with every rule pattern in case_definition_rules.csv. In short:\n\nA broad keyword and product-code search found candidate records in each source.\nExclusion rules removed out-of-scope products, matching only the product name, because descriptions often mention bicycles in passing.\nRemaining records were marked confirmed (a bicycle product code, or a bicycle or component named) or probable (an accessory or e-bike part with bicycle context). Both count as cases.\n2 records were settled by documented manual review.\n\n\n\n\nCandidate records by source and case status\n\n\nStatus\nHealth Canada\nUS CPSC\nTotal\n\n\n\n\nconfirmed\n188\n439\n627\n\n\nprobable\n4\n3\n7\n\n\nexcluded\n31\n129\n160\n\n\nnot_case\n0\n3\n3"
+  },
+  {
+    "objectID": "methods.html#linking-joint-recalls",
+    "href": "methods.html#linking-joint-recalls",
+    "title": "Methods",
+    "section": "3. Linking joint recalls",
+    "text": "3. Linking joint recalls\nMany recalls are announced in both countries. Canadian notices were linked to US notices in three stages: an exact match on the Health Canada web address listed in the US record (25 notices), a match on recall date (within 14 days) and product-name similarity (54), and manual review (6). Linked notices share an event ID and count once in combined totals."
+  },
+  {
+    "objectID": "methods.html#classification",
+    "href": "methods.html#classification",
+    "title": "Methods",
+    "section": "4. Classification",
+    "text": "4. Classification\nEach case was coded on three questions:\n\nWhat was recalled: complete bicycle, complete e-bike, component, accessory, or e-bike battery, charger, or power part.\nWhat failed: fork, frame, stem or handlebar, brakes, wheels, hubs, or tires, drivetrain or pedals, saddle or seatpost, e-bike electrical system, accessory, or other.\nHazard: fall or crash, fire or burn, laceration, or other (with a finer detail field).\n\nFor whole bikes, the failed part is the first part named in the hazard text (“The fork’s steerer tube can crack…”). For parts recalled on their own, it is the part itself. Every pattern is in classification_rules.csv.\nThe rules were refined in four versions. Each fix came from a specific error:\n\n“Bicycle Forks” counted as whole bikes. The rule looking for a bike word followed by “for” or “by” matched the start of “Forks”. Fixing it raised accuracy for what was recalled from 82% to 95% in the development sample.\nA bike carrier called the “Explore” counted as a fire hazard, because “explo” was meant to catch “explosion”.\n“Non-Electric” bikes counted as e-bikes, and a chain “connector” counted as an electrical part.\nThe “Ride-On” brand of brake cables was excluded as a ride-on toy."
+  },
+  {
+    "objectID": "methods.html#validation",
+    "href": "methods.html#validation",
+    "title": "Methods",
+    "section": "5. Validation",
+    "text": "5. Validation\nTwo samples were labelled by hand, without seeing the rules’ answers:\n\nDevelopment sample (100 records): used to find and fix errors in the rules. Its figures are optimistic, because the rules were tuned on it.\nHoldout sample (40 records): drawn after the rules were frozen and never used to change them. These are the figures to rely on.\n\nBoth samples were stratified (e-bike cases, other cases, and non-cases), and weighted figures are scaled back to the full dataset. Intervals are 95% Wilson intervals for proportions and stratified bootstrap intervals for weighted figures and kappa. “Adjudicated” figures correct labelling slips found on review, each recorded with a reason in validation/.\n\n\n\nAgreement between the rules and hand labels (estimate and 95% interval)\n\n\n\n\n\n\n\n\n\nMeasure\nDevelopment, first rules\nDevelopment, final rules\nHoldout\nHoldout, adjudicated\n\n\n\n\nCase definition: positive predictive value\n99% (93% to 100%)\n99% (93% to 100%)\n100% (90% to 100%)\n100% (90% to 100%)\n\n\nCase definition: negative predictive value\n90% (70% to 97%)\n90% (70% to 97%)\n83% (44% to 97%)\n100% (61% to 100%)\n\n\nCase definition: sensitivity (weighted)\n98% (94% to 100%)\n98% (94% to 100%)\n96% (89% to 100%)\n100% (100% to 100%)\n\n\nCase definition: specificity (weighted)\n94% (84% to 100%)\n94% (84% to 100%)\n100% (100% to 100%)\n100% (100% to 100%)\n\n\nWhat was recalled: accuracy\n82% (72% to 89%)\n95% (88% to 98%)\n97% (85% to 100%)\n97% (85% to 100%)\n\n\nWhat was recalled: kappa\n0.73 (0.61 to 0.85)\n0.93 (0.85 to 0.98)\n0.96 (0.86 to 1.00)\n0.96 (0.86 to 1.00)\n\n\nFailed part: accuracy\n92% (84% to 96%)\n92% (84% to 96%)\n82% (66% to 92%)\n85% (70% to 94%)\n\n\nFailed part: kappa\n0.91 (0.84 to 0.97)\n0.91 (0.84 to 0.97)\n0.80 (0.66 to 0.93)\n0.83 (0.69 to 0.96)\n\n\nHazard: accuracy\n92% (84% to 96%)\n99% (93% to 100%)\n94% (81% to 98%)\n94% (81% to 98%)\n\n\nHazard: kappa\n0.64 (0.32 to 0.88)\n0.92 (0.66 to 1.00)\n0.65 (0.00 to 1.00)\n0.65 (0.00 to 1.00)\n\n\n\n\n\nThe holdout is the honest test. Accuracy for the failed part fell from 92% in development to 82% on the holdout, which is the usual cost of tuning rules on one sample. The hazard kappa has a very wide interval because almost every recall is a fall hazard, so the few disagreements carry great weight; accuracy is the more useful figure there.\nWhere people and rules disagreed. Most remaining disagreements are genuinely ambiguous: a fender bolt that affects the wheel, a quick release that interferes with a disc brake, rear bolts recalled on complete e-bikes. Two come from 1990s records whose hazard field says only “Fall” or “Vehicle Accident”, which gives the rules nothing to work with. One raised a fair point about the categories themselves: a bike falling off a wall hook onto someone nearby is a hazard, but not really a rider’s “fall or crash”.\nThe validation was done by the author, who also wrote the rules. A review by an independent domain expert is planned."
+  },
+  {
+    "objectID": "methods.html#signal-detection",
+    "href": "methods.html#signal-detection",
+    "title": "Methods",
+    "section": "6. Signal detection",
+    "text": "6. Signal detection\nUS notices only. For each series and year from 2005, the expected count is the mean of the five previous years, and Poisson 95th and 99th percentiles set the Watch and Signal thresholds, with a minimum of three recalls. The current year is compared year-to-date. Details are on the Signals page."
+  },
+  {
+    "objectID": "methods.html#data-dictionary",
+    "href": "methods.html#data-dictionary",
+    "title": "Methods",
+    "section": "7. Data dictionary",
+    "text": "7. Data dictionary\n\n\n\nColumns in bike_recalls.csv\n\n\n\n\n\n\n\n\nVariable\nType\nDescription\n% complete\n\n\n\n\nrecord_id\ncharacter\nUnique record ID. ‘US-’ plus the CPSC recall number, or ‘CA-’ plus the Health Canada identification (RA) number. Where two Canadian notices share an RA number, ‘-NID’ plus the open data NID is appended.\n100.0\n\n\nevent_id\ncharacter\nRecall event ID. Joint US and Canadian notices share one event ID (EV-US- plus the CPSC recall number). Use for combined counts across both countries.\n100.0\n\n\nsource\ncharacter\nRegulator that published the notice: US CPSC or Health Canada.\n100.0\n\n\ncountry\ncharacter\nCountry of the regulator: United States or Canada.\n100.0\n\n\nrecall_date\nDate\nDate the recall was announced. CPSC: RecallDate. Health Canada: starting date (pages before 2022) or original published date (2022 onward), read from the recall page.\n100.0\n\n\nrecall_year\nnumeric\nYear of recall_date.\n100.0\n\n\nin_trend_window\nlogical\nTRUE if the notice falls in the trend analysis window (US from 2000, Canada from 2008). Earlier notices are kept but not used in trend charts.\n100.0\n\n\ntitle\ncharacter\nNotice title as published. The Health Canada ‘Archived -’ prefix is removed.\n100.0\n\n\nurl\ncharacter\nLink to the official recall notice.\n100.0\n\n\ncase_status\ncharacter\nCertainty under case definition v1.3: confirmed or probable. This dataset contains cases only.\n100.0\n\n\ncase_reason\ncharacter\nID of the rule that set the case status (see methods/case_definition_rules.csv). ‘MANUAL:’ marks a documented manual override.\n100.0\n\n\nproduct_form\ncharacter\nWhat was recalled: Complete bicycle, Complete e-bike, Component, Accessory, E-bike battery, charger, or power part, or Unclear.\n100.0\n\n\nis_ebike_related\nlogical\nTRUE if the recalled product is an e-bike (including recalls that mix regular and electric bikes), an e-bike battery, charger, or power part, or a component recalled from e-bikes. Accessories made for e-bikes, such as e-bike racks, are not counted.\n100.0\n\n\npossible_emoto\nlogical\nTRUE if e-bike related and the text describes no pedals, a throttle-only design, a speed above 28 mph or 32 km/h, or power above 750 W (US) or 500 W (Canada). Rarely triggered: notices seldom state these specifications.\n100.0\n\n\nemoto_evidence\nlogical\nText evidence behind possible_emoto.\n0.0\n\n\nfailed_component\ncharacter\nThe part whose failure creates the hazard. For part-only recalls, the recalled part. Compliance problems with no failing part (for example lead paint) are Other or unclear.\n100.0\n\n\ncomponents_mentioned\ncharacter\nAll component category IDs mentioned in the product name or hazard text, separated by semicolons.\n96.2\n\n\nhazard_group\ncharacter\nMain injury mechanism: Fall or crash, Fire or burn, Laceration, or Other.\n100.0\n\n\nhazard_detail\ncharacter\nDetailed hazard: fall_crash, fire_burn, laceration, entrapment_pinch, choking_ingestion, chemical_lead, electrical_shock, or other_injury.\n100.0\n\n\nhazards_mentioned\ncharacter\nAll hazard categories mentioned in the title, issue, or hazard text, separated by semicolons.\n90.4\n\n\nincidents_reported\nnumeric\nNumber of incidents, reports, complaints, or claims stated in the notice, as reported by the firm or regulator. Extracted from text. NA if no number is stated. Health Canada counts usually refer to Canada only.\n84.2\n\n\ninjuries_reported\nnumeric\nNumber of injuries stated in the notice. Extracted from text. NA if no number is stated. 0 where the notice says no injuries were reported.\n66.2\n\n\ndeath_mentioned\nlogical\nTRUE if the incident text mentions a death, after removing standard ‘serious injury or death’ risk wording. Review before use: may still reflect risk language rather than reported deaths.\n100.0\n\n\ndeaths_reported\nlogical\nNumber of deaths, where stated as a number.\n0.0\n\n\nunits_recalled\nnumeric\nNumber of units recalled or sold, parsed from units_text (first number stated). CPSC figures are usually US units. Health Canada figures are units sold in Canada.\n91.5\n\n\nunits_text\ncharacter\nUnits text as published.\n91.8\n\n\nremedy_us\ncharacter\nCPSC remedy options (for example Refund, Repair, Replace). Not available for Health Canada notices.\n39.4\n\n\norigin_primary\ncharacter\nFirst country of manufacture named in the notice.\n86.1\n\n\norigin_countries\ncharacter\nAll countries of manufacture named, separated by semicolons.\n86.1\n\n\nlinked_cpsc_id\ncharacter\nFor Health Canada notices linked to a CPSC notice, the CPSC recall number.\n11.7\n\n\nlink_method\ncharacter\nHow a Health Canada notice was linked to CPSC: url, date_and_name, or manual. NA if not linked.\n11.7\n\n\nhazard_text\ncharacter\nHazard description from the notice (CPSC Hazards field, or the Health Canada ‘Hazard identified’ or ‘Issue’ section).\n99.4\n\n\ndescription_text\ncharacter\nProduct description from the notice.\n100.0"
+  },
+  {
+    "objectID": "methods.html#downloads",
+    "href": "methods.html#downloads",
+    "title": "Methods",
+    "section": "8. Downloads",
+    "text": "8. Downloads\n\nbike_recalls.csv: one row per recall notice (cases only)\nbike_recalls.parquet: the same data with dates and logical columns preserved\ndata_dictionary.csv: every column, with descriptions and completeness\n\nTo count recalls across both countries, count distinct event_id values. For trends, filter to in_trend_window."
+  },
+  {
+    "objectID": "methods.html#data-credits-and-licences",
+    "href": "methods.html#data-credits-and-licences",
+    "title": "Methods",
+    "section": "9. Data credits and licences",
+    "text": "9. Data credits and licences\n\n\nUS Consumer Product Safety Commission, Recalls API (saferproducts.gov). US government work, public domain. Accessed November 2026.\nHealth Canada, Recalls and Safety Alerts (open.canada.ca and recalls-rappels.canada.ca). Contains information licensed under the Open Government Licence – Canada. Accessed November 2026.\nCode: MIT licence. Data keep their original licences.\n\n\nThis is an independent project using public data. It is not affiliated with or endorsed by the US Consumer Product Safety Commission, Health Canada, or any company named in the records. Brand names appear only as published in the official notices.\nCite as: Branch, E. (2026). Bike recall surveillance: bicycle, e-bike, and component recalls in the United States and Canada (version 1.0). https://emmabranch.github.io/bike-recall-surveillance/"
+  },
+  {
+    "objectID": "caveats.html",
+    "href": "caveats.html",
+    "title": "Caveats",
+    "section": "",
+    "text": "Every chart on this site counts recall notices. Recalls are a useful signal, but they are produced by a reporting system, and that system has its own habits. These are the main ones to keep in mind."
+  },
+  {
+    "objectID": "caveats.html#a-recall-is-not-an-injury",
+    "href": "caveats.html#a-recall-is-not-an-injury",
+    "title": "Caveats",
+    "section": "1. A recall is not an injury",
+    "text": "1. A recall is not an injury\nA recall shows that a company and a regulator acted on a safety problem. It does not show how many people were hurt, how badly, or how often. Some recalls follow serious injuries, and many are issued before anyone is hurt. Injury data, such as emergency department surveillance, would answer different questions and is not part of this project."
+  },
+  {
+    "objectID": "caveats.html#reporting-is-passive-and-negotiated",
+    "href": "caveats.html#reporting-is-passive-and-negotiated",
+    "title": "Caveats",
+    "section": "2. Reporting is passive and negotiated",
+    "text": "2. Reporting is passive and negotiated\nIn both countries, most recalls are voluntary: a company finds or is told about a problem and agrees a recall with the regulator. That means the count depends on:\n\ncompany behaviour: how carefully firms test, monitor complaints, and report;\nregulator priorities: where staff time and attention go in a given year;\ncooperation: firms that do not cooperate, or that sell from outside the country, may never appear as recalls at all.\n\nThis matters for interpreting companies too. A brand with several recalls may simply be one that monitors its products closely and acts quickly. That is one reason this site never ranks or compares companies."
+  },
+  {
+    "objectID": "caveats.html#there-is-no-denominator",
+    "href": "caveats.html#there-is-no-denominator",
+    "title": "Caveats",
+    "section": "3. There is no denominator",
+    "text": "3. There is no denominator\nThe number of bikes sold, the number of models on the market, and how far people ride all changed over this period, and none of them are measured here. A rise in e-bike recalls is at least partly a rise in e-bikes. Without sales or exposure data, these counts describe regulatory activity, not risk per bike or per kilometre."
+  },
+  {
+    "objectID": "caveats.html#rules-and-regulators-change",
+    "href": "caveats.html#rules-and-regulators-change",
+    "title": "Caveats",
+    "section": "4. Rules and regulators change",
+    "text": "4. Rules and regulators change\nCounts can change because the rules changed, not because products did:\n\nCanada, February 2021. The federal definition of a power-assisted bicycle was repealed, leaving e-bikes between vehicle rules, consumer product law, and provincial road rules. Canada’s very low e-bike recall count may partly reflect this.\nUnited States, 2024 onward. CPSC began rulemaking on e-bikes in 2024 and proposed a mandatory lithium-ion battery standard for micromobility products in June 2026. New standards often raise recall counts at first, as non-compliant products are identified.\nChildren’s product rules. Several recalls are for lead paint or missing foot brakes on children’s bikes. These reflect compliance checks against specific regulations, rather than parts failing in use."
+  },
+  {
+    "objectID": "caveats.html#canada-and-the-united-states-are-not-directly-comparable",
+    "href": "caveats.html#canada-and-the-united-states-are-not-directly-comparable",
+    "title": "Caveats",
+    "section": "5. Canada and the United States are not directly comparable",
+    "text": "5. Canada and the United States are not directly comparable\n\nDifferent start dates. US records here run from 2000 (391 notices in the trend window). Canadian records start in 2008 (191 notices), because earlier online coverage is sparse.\nJoint recalls. About 39% of Canadian notices are linked to a US notice for the same recall. The site counts these once as a single recall event, but some joint notices could not be matched and may be counted twice.\nDifferent records. Health Canada’s open data has no product descriptions or recall dates, so both were read from each recall’s web page. Health Canada also changed its identification numbers over time, so two notices can share an ID.\nDifferent units. US notices usually count units sold in the US, and Canadian notices count units sold in Canada.\nPopulation size. Canada has about one-eighth of the US population, so its yearly counts are small and noisy."
+  },
+  {
+    "objectID": "caveats.html#the-classification-is-good-not-perfect",
+    "href": "caveats.html#the-classification-is-good-not-perfect",
+    "title": "Caveats",
+    "section": "6. The classification is good, not perfect",
+    "text": "6. The classification is good, not perfect\nEach recall was sorted by rules that read the notice text. Checked against 140 hand-labelled records, the rules agree with a person most of the time, but not always (see Methods for the figures). The main weak points are:\n\nold US records from the 1970s to 1990s, where the hazard field often says only “Fall” or “Vehicle Accident”;\nambiguous notices, such as a fender bolt that affects the wheel, or a quick release that interferes with a disc brake;\ne-bikes versus electric motorbikes: notices rarely state top speed or motor power, so faster electric two-wheelers sold as e-bikes cannot be reliably separated out;\n“Fall or crash” mostly means a rider falling, but it also covers things like a bike falling off a wall hook onto someone nearby."
+  },
+  {
+    "objectID": "caveats.html#numbers-pulled-from-text-are-incomplete",
+    "href": "caveats.html#numbers-pulled-from-text-are-incomplete",
+    "title": "Caveats",
+    "section": "7. Numbers pulled from text are incomplete",
+    "text": "7. Numbers pulled from text are incomplete\nCounts of incidents, injuries, and units are read from each notice’s text. A blank means the notice did not state a number, not that the number was zero. No notice in these records states a death count in a form that could be read reliably."
+  },
+  {
+    "objectID": "caveats.html#recall-dates-are-not-manufacturing-dates",
+    "href": "caveats.html#recall-dates-are-not-manufacturing-dates",
+    "title": "Caveats",
+    "section": "8. Recall dates are not manufacturing dates",
+    "text": "8. Recall dates are not manufacturing dates\nA recall is dated when it is announced. The products involved may have been made and sold years earlier, so a recall in one year can reflect design and manufacturing decisions from several years before."
+  },
+  {
+    "objectID": "caveats.html#signals-are-prompts-not-conclusions",
+    "href": "caveats.html#signals-are-prompts-not-conclusions",
+    "title": "Caveats",
+    "section": "9. Signals are prompts, not conclusions",
+    "text": "9. Signals are prompts, not conclusions\nThe Signals page flags years when a count is unusually high for its own history. With hundreds of comparisons, a few flags are expected by chance, and real changes in regulation or reporting can also trigger them. Each flag is a reason to read the recalls behind it."
   }
 ]

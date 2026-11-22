@@ -7,6 +7,8 @@ project:
     - ebikes.qmd
     - signals.qmd
     - dashboard.qmd
+    - caveats.qmd
+    - methods.qmd
   resources:
     - .nojekyll
     - data/bike_recalls.csv
@@ -30,6 +32,10 @@ website:
         text: Signals
       - href: dashboard.qmd
         text: Dashboard
+      - href: caveats.qmd
+        text: Caveats
+      - href: methods.qmd
+        text: Methods
     right:
       - icon: github
         href: https://github.com/emmabranch/bike-recall-surveillance
