@@ -1,0 +1,27 @@
+label_set,measure,estimate,lower,upper,n,note
+original,Case definition PPV,1,0.898,1,34,"Wilson interval, unweighted"
+original,Case definition NPV,0.833,0.436,0.97,6,"Wilson interval, unweighted"
+original,Case definition sensitivity (weighted),0.959,0.886,1,40,"Stratified bootstrap, relative to candidate pool"
+original,Case definition specificity (weighted),1,1,1,40,"Stratified bootstrap, relative to candidate pool"
+original,product_form accuracy,0.971,0.851,0.995,34,"Wilson interval, unweighted"
+original,product_form accuracy (weighted),0.99,0.969,1,34,Stratified bootstrap
+original,product_form kappa,0.957,0.857,1,34,"Cohen's kappa, stratified bootstrap"
+original,failed_component accuracy,0.824,0.665,0.917,34,"Wilson interval, unweighted"
+original,failed_component accuracy (weighted),0.789,0.612,0.93,34,Stratified bootstrap
+original,failed_component kappa,0.798,0.656,0.93,34,"Cohen's kappa, stratified bootstrap"
+original,hazard_group accuracy,0.941,0.809,0.984,34,"Wilson interval, unweighted"
+original,hazard_group accuracy (weighted),0.93,0.824,1,34,Stratified bootstrap
+original,hazard_group kappa,0.648,0,1,34,"Cohen's kappa, stratified bootstrap"
+adjudicated,Case definition PPV,1,0.898,1,34,"Wilson interval, unweighted"
+adjudicated,Case definition NPV,1,0.61,1,6,"Wilson interval, unweighted"
+adjudicated,Case definition sensitivity (weighted),1,1,1,40,"Stratified bootstrap, relative to candidate pool"
+adjudicated,Case definition specificity (weighted),1,1,1,40,"Stratified bootstrap, relative to candidate pool"
+adjudicated,product_form accuracy,0.971,0.851,0.995,34,"Wilson interval, unweighted"
+adjudicated,product_form accuracy (weighted),0.99,0.969,1,34,Stratified bootstrap
+adjudicated,product_form kappa,0.957,0.862,1,34,"Cohen's kappa, stratified bootstrap"
+adjudicated,failed_component accuracy,0.853,0.699,0.936,34,"Wilson interval, unweighted"
+adjudicated,failed_component accuracy (weighted),0.824,0.683,0.93,34,Stratified bootstrap
+adjudicated,failed_component kappa,0.832,0.693,0.962,34,"Cohen's kappa, stratified bootstrap"
+adjudicated,hazard_group accuracy,0.941,0.809,0.984,34,"Wilson interval, unweighted"
+adjudicated,hazard_group accuracy (weighted),0.93,0.824,1,34,Stratified bootstrap
+adjudicated,hazard_group kappa,0.648,0,1,34,"Cohen's kappa, stratified bootstrap"

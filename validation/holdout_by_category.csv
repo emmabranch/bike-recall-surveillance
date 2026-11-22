@@ -1,0 +1,35 @@
+label_set,field,category,n_label,n_rule,precision,recall
+original,product_form,Accessory,4,4,1,1
+original,product_form,Complete bicycle,16,16,1,1
+original,product_form,Complete e-bike,6,7,0.857,1
+original,product_form,Component,8,7,1,0.875
+original,failed_component,Accessory,5,4,1,0.8
+original,failed_component,Brakes,3,1,1,0.333
+original,failed_component,Drivetrain or pedals,5,6,0.833,1
+original,failed_component,Fork,6,6,1,1
+original,failed_component,Frame,3,4,0.75,1
+original,failed_component,Other or unclear,1,2,0,0
+original,failed_component,Saddle or seatpost,3,3,1,1
+original,failed_component,Stem or handlebar,4,3,1,0.75
+original,failed_component,"Wheels, hubs, or tires",4,5,0.6,0.75
+original,hazard_group,Fall or crash,30,32,0.938,1
+original,hazard_group,Fire or burn,1,1,1,1
+original,hazard_group,Laceration,1,0,NA,0
+original,hazard_group,Other,2,1,1,0.5
+adjudicated,product_form,Accessory,4,4,1,1
+adjudicated,product_form,Complete bicycle,16,16,1,1
+adjudicated,product_form,Complete e-bike,6,7,0.857,1
+adjudicated,product_form,Component,8,7,1,0.875
+adjudicated,failed_component,Accessory,5,4,1,0.8
+adjudicated,failed_component,Brakes,3,1,1,0.333
+adjudicated,failed_component,Drivetrain or pedals,6,6,1,1
+adjudicated,failed_component,Fork,6,6,1,1
+adjudicated,failed_component,Frame,3,4,0.75,1
+adjudicated,failed_component,Other or unclear,1,2,0,0
+adjudicated,failed_component,Saddle or seatpost,3,3,1,1
+adjudicated,failed_component,Stem or handlebar,4,3,1,0.75
+adjudicated,failed_component,"Wheels, hubs, or tires",3,5,0.6,1
+adjudicated,hazard_group,Fall or crash,30,32,0.938,1
+adjudicated,hazard_group,Fire or burn,1,1,1,1
+adjudicated,hazard_group,Laceration,1,0,NA,0
+adjudicated,hazard_group,Other,2,1,1,0.5

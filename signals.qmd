@@ -184,7 +184,7 @@ viewof chosen = Inputs.select(sm.series, {label: "Series", value: "All bicycle r
 {
   const d = rows.filter(r => r.name === chosen && !r.is_ytd);
   const fig = Plot.plot({
-    width,
+    width: Math.min(width, 860),
     height: 320,
     marginLeft: 48,
     x: {label: null, tickFormat: "d"},

@@ -1,0 +1,3 @@
+val_id,field,original_label,adjudicated_label,reason
+H033,is_case,Yes,No,"Horse-riding saddles, out of scope; labeller misread as bicycle saddles"
+H036,failed_component,"Wheels, hubs, or tires",Drivetrain or pedals,"Derailleurs are drivetrain; labeller unsure of category"
