@@ -8,7 +8,7 @@ failed_component,wheels_hubs,"Wheels, hubs, or tires",\b(wheels?|wheelsets?|rims
 failed_component,drivetrain,Drivetrain or pedals,\b(cranks?|crank ?arms?|cranksets?|chainrings?|chains?|cassettes?|freewheels?|derailleurs?|derailleur hangers?|bottom brackets?|pedals?|pedal axles?|spindles?|shifters?|shift levers?|gears?|gear hubs?|belts?|belt drives?|sprockets?|cogs?)\b
 failed_component,seat_seatpost,Saddle or seatpost,\b(seat ?posts?|saddles?|seats?|seat clamps?|saddle rails?|seat rails?)\b
 failed_component,accessory,Accessory,\b(lights?|lamps?|headlights?|taillights?|locks?|bags?|panniers?|racks?|carriers?|hooks?|hitch(es)?|adaptor bars?|adapter bars?|cradles?|pumps?|bells?|fenders?|mudguards?|kickstands?|baskets?|reflectors?|computers?|mounts?|brackets?|hoists?|straps?|bottle cages?|trainers?|flywheels?|grips?|keys?)\b
-hazard,fire_burn,Fire or burn,\b(fire|burns?|burning|overheat\w*|thermal runaway|smok\w*|flames?|explo\w*|ignit\w*)\b
+hazard,fire_burn,Fire or burn,\b(fire|burns?|burning|overheat\w*|thermal runaway|smok\w*|flames?|explo(sion|sions|de|des|ded|ding|sive)|ignit\w*)\b
 hazard,fall_crash,Fall or crash,\b(falls?|falling|crash\w*|loss of control|lose control|losing control|collisions?|thrown|eject\w*)\b
 hazard,laceration,Laceration,\b(lacerat\w*|cuts?|amputat\w*|sharp edges?)\b
 hazard,entrapment_pinch,Other,\b(entrap\w*|pinch\w*|crush\w*|strangulat\w*|fingertips?)\b
