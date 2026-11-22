@@ -48,6 +48,15 @@ components = [].concat(meta.components)
 hazards = [].concat(meta.hazards)
 hazardColors = ["#2a78d6", "#eb6834", "#1baf7a", "#6250d6"]
 fmtN = d3.format(",")
+
+// Set a filter control from code (used by the heatmap and the reset button)
+setInput = (input, value) => {
+  input.value = value;
+  input.dispatchEvent(new Event("input", {bubbles: true}));
+}
+
+// Countries reporting each recall event (joint events have both)
+eventCountries = d3.rollup(data, v => new Set(v.map(d => d.country)), d => d.event_id)
 ```
 
 ::: {.panel-sidebar}
@@ -65,6 +74,16 @@ viewof ebikeOnly = Inputs.toggle({label: "E-bike related only", value: false})
 viewof includeProbable = Inputs.toggle({label: "Include probable cases", value: true})
 viewof measure = Inputs.radio(["Recall events", "Units recalled"], {label: "Count", value: "Recall events"})
 viewof view = Inputs.radio(["By hazard", "By failed part"], {label: "Chart", value: "By hazard"})
+viewof reset = Inputs.button("Reset all filters", {reduce: () => {
+  setInput(viewof countries, ["United States", "Canada"]);
+  setInput(viewof yearFrom, minYear);
+  setInput(viewof yearTo, maxYear);
+  setInput(viewof form, "All");
+  setInput(viewof component, "All");
+  setInput(viewof hazard, "All");
+  setInput(viewof ebikeOnly, false);
+  setInput(viewof includeProbable, true);
+}})
 ```
 
 :::
@@ -76,16 +95,19 @@ viewof view = Inputs.radio(["By hazard", "By failed part"], {label: "Chart", val
 lo = Math.min(yearFrom, yearTo)
 hi = Math.max(yearFrom, yearTo)
 
-// Rows passing every filter, then one row per recall event
-filtered = {
-  const rows = data.filter(d =>
-    countries.includes(d.country) &&
-    d.recall_year >= lo && d.recall_year <= hi &&
-    (form === "All" || d.product_form === form) &&
-    (component === "All" || d.failed_component === component) &&
-    (hazard === "All" || d.hazard_group === hazard) &&
-    (!ebikeOnly || d.is_ebike_related) &&
-    (includeProbable || d.case_status === "confirmed"));
+// Does a notice pass the filters? "skip" leaves some filters out, so the
+// heatmap and the country chart can show the full picture around a selection.
+passes = (d, skip = []) =>
+  (skip.includes("country") || countries.includes(d.country)) &&
+  d.recall_year >= lo && d.recall_year <= hi &&
+  (form === "All" || d.product_form === form) &&
+  (skip.includes("component") || component === "All" || d.failed_component === component) &&
+  (skip.includes("hazard") || hazard === "All" || d.hazard_group === hazard) &&
+  (!ebikeOnly || d.is_ebike_related) &&
+  (includeProbable || d.case_status === "confirmed")
+
+// One row per recall event (the US notice, where there is one, comes first)
+uniqueEvents = rows => {
   const seen = new Set();
   return rows.filter(d => {
     if (seen.has(d.event_id)) return false;
@@ -93,6 +115,10 @@ filtered = {
     return true;
   });
 }
+
+filtered = uniqueEvents(data.filter(d => passes(d)))
+heatRows = uniqueEvents(data.filter(d => passes(d, ["component", "hazard"])))
+countryRows = uniqueEvents(data.filter(d => passes(d, ["country"]) && d.recall_year >= 2008))
 
 w = d => measure === "Recall events" ? 1 : (d.units_recalled ?? 0)
 measureLabel = measure === "Recall events" ? "recall events" : "units recalled"
@@ -211,8 +237,134 @@ html`<p class="dash-note">${view === "By hazard"
   : ""}</p>`
 ```
 
+## Which parts cause which hazards {.dash-h2}
+
 ```{ojs}
-DOM.download(() => new Blob([d3.csvFormat(filtered)], {type: "text/csv"}), "bike_recalls_filtered.csv", `Download these ${fmtN(filtered.length)} recalls (CSV)`)
+html`<p class="dash-note">Each cell counts ${measureLabel} for one failed part and one hazard, using all your other filters. <strong>Click a cell</strong> to filter the whole dashboard to it, and click it again to clear.</p>`
+```
+
+```{ojs}
+{
+  const counts = new Map();
+  for (const d of heatRows) {
+    const k = d.failed_component + "|" + d.hazard_group;
+    counts.set(k, (counts.get(k) ?? 0) + w(d));
+  }
+  const maxV = d3.max(counts.values()) || 1;
+  const color = d3.scaleSequential([0, maxV], d3.interpolateBlues);
+  const table = html`<table class="heat">
+    <thead><tr><th></th>${hazards.map(h => html`<th scope="col">${h}</th>`)}</tr></thead>
+    <tbody></tbody>
+  </table>`;
+  const tbody = table.querySelector("tbody");
+  for (const c of components) {
+    const tr = html`<tr><th scope="row">${c}</th></tr>`;
+    for (const h of hazards) {
+      const v = counts.get(c + "|" + h) ?? 0;
+      const selected = component === c && hazard === h;
+      const td = html`<td tabindex="0" class=${selected ? "selected" : ""}
+        style=${`background:${v ? color(Math.max(v, maxV * 0.12)) : "#f6f4ef"};color:${v > maxV * 0.5 ? "#ffffff" : "#1f2a33"}`}
+        title=${`${c}, ${h}: ${fmtN(Math.round(v))} ${measureLabel}`}>${v ? fmtN(Math.round(v)) : ""}</td>`;
+      const pick = () => {
+        setInput(viewof component, selected ? "All" : c);
+        setInput(viewof hazard, selected ? "All" : h);
+      };
+      td.onclick = pick;
+      td.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  const wrap = html`<div class="heat-wrap"></div>`;
+  wrap.append(table);
+  return wrap;
+}
+```
+
+## United States and Canada {.dash-h2}
+
+```{ojs}
+html`<p class="dash-note">${measure} per year since 2008, when Canadian records begin, using all your other filters (the country boxes are ignored here). Joint recalls were announced in both countries.</p>`
+```
+
+```{ojs}
+{
+  const cats = ["US only", "Joint (both countries)", "Canada only"];
+  const catColors = ["#2a78d6", "#1baf7a", "#eb6834"];
+  const yrs = d3.range(Math.max(lo, 2008), hi + 1);
+  if (!yrs.length) return html`<p class="dash-note">Choose years from 2008 onward to compare the two countries.</p>`;
+  const cat = d => {
+    const set = eventCountries.get(d.event_id);
+    if (set.size > 1) return "Joint (both countries)";
+    return set.has("Canada") ? "Canada only" : "US only";
+  };
+  const rows = yrs.flatMap(y => cats.map(k => ({
+    year: y, cat: k,
+    value: d3.sum(countryRows.filter(d => d.recall_year === y && cat(d) === k), w)
+  })));
+  const fig = Plot.plot({
+    width,
+    height: 300,
+    marginLeft: 56,
+    x: {label: null, tickFormat: "d", domain: [yrs[0], hi + 1]},
+    y: {label: measure === "Recall events" ? "Recall events per year" : "Units recalled per year", grid: true, tickFormat: "~s"},
+    color: {domain: cats, range: catColors, legend: true},
+    marks: [
+      Plot.rectY(rows, {
+        x: "year", interval: 1, y: "value", fill: "cat", order: cats,
+        fillOpacity: d => d.year === maxYear ? 0.45 : 1,
+        insetLeft: 1, insetRight: 1,
+        tip: true,
+        title: d => `${d.year}${d.year === maxYear ? " (partial year)" : ""}\n${d.cat}: ${fmtN(Math.round(d.value))} ${measureLabel}`
+      }),
+      Plot.ruleY([0])
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+## Matching recalls {.dash-h2}
+
+```{ojs}
+//| output: false
+listRows = filtered
+  .map(d => ({
+    year: d.recall_year,
+    country: eventCountries.get(d.event_id).size > 1 ? "Both" : (d.country === "United States" ? "US" : "Canada"),
+    title: d.title,
+    url: d.url,
+    what: d.product_form,
+    part: d.failed_component,
+    hazard: d.hazard_group,
+    status: d.case_status
+  }))
+  .sort((a, b) => b.year - a.year)
+```
+
+```{ojs}
+viewof search = Inputs.search(listRows, {placeholder: "Search titles, parts, hazards...", label: "Search"})
+```
+
+```{ojs}
+Inputs.table(search, {
+  columns: ["year", "country", "title", "what", "part", "hazard"],
+  header: {year: "Year", country: "Country", title: "Recall notice", what: "What was recalled", part: "Failed part", hazard: "Hazard"},
+  format: {title: (t, i, rows) => html`<a href=${rows[i].url} target="_blank" rel="noopener">${t}</a>`},
+  width: {year: 60, country: 80, title: 420},
+  rows: 12,
+  layout: "auto"
+})
+```
+
+```{ojs}
+html`<p class="dash-note">Titles link to the official notice. Brand names appear only as published by the regulator. For joint recalls, the US notice is shown.</p>`
+```
+
+```{ojs}
+DOM.download(() => new Blob([d3.csvFormat(listRows)], {type: "text/csv"}), "bike_recalls_filtered.csv", `Download these ${fmtN(listRows.length)} recalls (CSV)`)
 ```
 
 :::
