@@ -262,9 +262,11 @@ html`<p class="dash-note">Each cell counts ${measureLabel} for one failed part a
     for (const h of hazards) {
       const v = counts.get(c + "|" + h) ?? 0;
       const selected = component === c && hazard === h;
-      const td = html`<td tabindex="0" class=${selected ? "selected" : ""}
-        style=${`background:${v ? color(Math.max(v, maxV * 0.12)) : "#f6f4ef"};color:${v > maxV * 0.5 ? "#ffffff" : "#1f2a33"}`}
-        title=${`${c}, ${h}: ${fmtN(Math.round(v))} ${measureLabel}`}>${v ? fmtN(Math.round(v)) : ""}</td>`;
+      const td = html`<td tabindex="0">${v ? fmtN(Math.round(v)) : ""}</td>`;
+      td.style.background = v ? color(Math.max(v, maxV * 0.12)) : "#ffffff";
+      td.style.color = v > maxV * 0.5 ? "#ffffff" : "#1f2a33";
+      td.title = `${c}, ${h}: ${fmtN(Math.round(v))} ${measureLabel}`;
+      if (selected) td.classList.add("selected");
       const pick = () => {
         setInput(viewof component, selected ? "All" : c);
         setInput(viewof hazard, selected ? "All" : h);
@@ -348,16 +350,23 @@ listRows = filtered
 viewof search = Inputs.search(listRows, {placeholder: "Search titles, parts, hazards...", label: "Search"})
 ```
 
+::: {.recall-table}
+
 ```{ojs}
 Inputs.table(search, {
   columns: ["year", "country", "title", "what", "part", "hazard"],
   header: {year: "Year", country: "Country", title: "Recall notice", what: "What was recalled", part: "Failed part", hazard: "Hazard"},
-  format: {title: (t, i, rows) => html`<a href=${rows[i].url} target="_blank" rel="noopener">${t}</a>`},
+  format: {
+    year: y => String(y),
+    title: (t, i, rows) => html`<a href=${rows[i].url} target="_blank" rel="noopener">${t}</a>`
+  },
   width: {year: 60, country: 80, title: 420},
   rows: 12,
   layout: "auto"
 })
 ```
+
+:::
 
 ```{ojs}
 html`<p class="dash-note">Titles link to the official notice. Brand names appear only as published by the regulator. For joint recalls, the US notice is shown.</p>`
