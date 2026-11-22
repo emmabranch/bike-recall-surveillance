@@ -1,0 +1,34 @@
+variable,type,description,values,pct_complete,n_distinct
+record_id,character,"Unique record ID. 'US-' plus the CPSC recall number, or 'CA-' plus the Health Canada identification (RA) number. Where two Canadian notices share an RA number, '-NID' plus the open data NID is appended.",free text or identifier,100,634
+event_id,character,Recall event ID. Joint US and Canadian notices share one event ID (EV-US- plus the CPSC recall number). Use for combined counts across both countries.,free text or identifier,100,560
+source,character,Regulator that published the notice: US CPSC or Health Canada.,Health Canada; US CPSC,100,2
+country,character,Country of the regulator: United States or Canada.,Canada; United States,100,2
+recall_date,Date,"Date the recall was announced. CPSC: RecallDate. Health Canada: starting date (pages before 2022) or original published date (2022 onward), read from the recall page.",1978-05-31 to 2026-11-12,100,504
+recall_year,numeric,Year of recall_date.,"range 1,978 to 2,026",100,43
+in_trend_window,logical,"TRUE if the notice falls in the trend analysis window (US from 2000, Canada from 2008). Earlier notices are kept but not used in trend charts.",FALSE; TRUE,100,2
+title,character,Notice title as published. The Health Canada 'Archived -' prefix is removed.,free text or identifier,100,628
+url,character,Link to the official recall notice.,free text or identifier,100,634
+case_status,character,Certainty under case definition v1.3: confirmed or probable. This dataset contains cases only.,confirmed; probable,100,2
+case_reason,character,ID of the rule that set the case status (see methods/case_definition_rules.csv). 'MANUAL:' marks a documented manual override.,CONF01_cpsc_bicycle_code; CONF02_bike_named; CONF03_component_named; PROB01_part_or_accessory; PROB03_sports_context,100,5
+product_form,character,"What was recalled: Complete bicycle, Complete e-bike, Component, Accessory, E-bike battery, charger, or power part, or Unclear.","Accessory; Complete bicycle; Complete e-bike; Component; E-bike battery, charger, or power part; Unclear",100,6
+is_ebike_related,logical,"TRUE if the recall involves e-bikes, e-bike parts, or e-bike batteries or chargers, including recalls that mix regular and electric bikes.",FALSE; TRUE,100,2
+possible_emoto,logical,"TRUE if e-bike related and the text describes no pedals, a throttle-only design, a speed above 28 mph or 32 km/h, or power above 750 W (US) or 500 W (Canada). Rarely triggered: notices seldom state these specifications.",FALSE,100,1
+emoto_evidence,logical,Text evidence behind possible_emoto.,(all missing),0,0
+failed_component,character,"The part whose failure creates the hazard. For part-only recalls, the recalled part. Compliance problems with no failing part (for example lead paint) are Other or unclear.","Accessory; Brakes; Drivetrain or pedals; E-bike electrical system; Fork; Frame; Other or unclear; Saddle or seatpost; Stem or handlebar; Wheels, hubs, or tires",100,10
+components_mentioned,character,"All component category IDs mentioned in the product name or hazard text, separated by semicolons.",free text or identifier,96.2,53
+hazard_group,character,"Main injury mechanism: Fall or crash, Fire or burn, Laceration, or Other.",Fall or crash; Fire or burn; Laceration; Other,100,4
+hazard_detail,character,"Detailed hazard: fall_crash, fire_burn, laceration, entrapment_pinch, choking_ingestion, chemical_lead, electrical_shock, or other_injury.",chemical_lead; choking_ingestion; entrapment_pinch; fall_crash; fire_burn; laceration; other_injury,100,7
+hazards_mentioned,character,"All hazard categories mentioned in the title, issue, or hazard text, separated by semicolons.",chemical_lead; choking_ingestion; choking_ingestion; chemical_lead; entrapment_pinch; fall_crash; fall_crash; entrapment_pinch; fall_crash; laceration; fire_burn; fire_burn; choking_ingestion; chemical_lead; fire_burn; fall_crash; laceration; laceration; entrapment_pinch,90.4,12
+incidents_reported,numeric,"Number of incidents, reports, complaints, or claims stated in the notice, as reported by the firm or regulator. Extracted from text. NA if no number is stated. Health Canada counts usually refer to Canada only.","range 0 to 4,519",84.2,53
+injuries_reported,numeric,Number of injuries stated in the notice. Extracted from text. NA if no number is stated. 0 where the notice says no injuries were reported.,range 0 to 32,66.2,15
+death_mentioned,logical,"TRUE if the incident text mentions a death, after removing standard 'serious injury or death' risk wording. Review before use: may still reflect risk language rather than reported deaths.",FALSE; TRUE,100,2
+deaths_reported,logical,"Number of deaths, where stated as a number.",(all missing),0,0
+units_recalled,numeric,"Number of units recalled or sold, parsed from units_text (first number stated). CPSC figures are usually US units. Health Canada figures are units sold in Canada.","range 4 to 1,300,000",91.5,369
+units_text,character,Units text as published.,free text or identifier,91.8,483
+remedy_us,character,"CPSC remedy options (for example Refund, Repair, Replace). Not available for Health Canada notices.",Dispose; Inspect; Replace; Refund; Refund; Repair; Refund; Replace; Refund; Replace; Repair; Repair; Repair; Replace; Replace; Replace; Refund; Replace; Repair,39.4,11
+origin_primary,character,First country of manufacture named in the notice.,free text or identifier,86.1,20
+origin_countries,character,"All countries of manufacture named, separated by semicolons.",free text or identifier,86.1,50
+linked_cpsc_id,character,"For Health Canada notices linked to a CPSC notice, the CPSC recall number.",free text or identifier,11.7,74
+link_method,character,"How a Health Canada notice was linked to CPSC: url, date_and_name, or manual. NA if not linked.",date_and_name; manual; url,11.7,3
+hazard_text,character,"Hazard description from the notice (CPSC Hazards field, or the Health Canada 'Hazard identified' or 'Issue' section).",free text or identifier,99.4,574
+description_text,character,Product description from the notice.,free text or identifier,100,630

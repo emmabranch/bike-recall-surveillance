@@ -1,0 +1,81 @@
+---
+pagetitle: "Bike recall surveillance: what 25 years of recalls say about which parts fail"
+author: "Emma Branch"
+description: "Bicycle, e-bike, and bicycle component recalls from US CPSC and Health Canada, classified by failed component and hazard, and analysed with public health surveillance methods."
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+```
+
+::::: {.hero-full .column-screen}
+
+```{r hero-bg}
+#| output: asis
+cat(hero_stripes(events, last_full_year))
+```
+
+:::: {.hero-inner}
+
+[Portfolio project · R · Quarto · open data]{.eyebrow}
+
+# Bike recalls, read like surveillance data. [Which parts fail, which hazards follow, and what is changing.]{.accent}
+
+Every bicycle, e-bike, and component recall published by the US Consumer Product Safety Commission and Health Canada, sorted with a written case definition, classified by the part that failed and the hazard it caused, and checked against hand-labelled records.
+
+[Open the dashboard](dashboard.qmd){.btn .btn-accent} [Key findings](#key-findings){.btn .btn-ghost} [Code on GitHub](https://github.com/emmabranch/bike-recall-surveillance){.btn .btn-ghost}
+
+[Background: one stripe per year since 2000, brighter in years with more recall events. Data: US CPSC (from 2000) and Health Canada (from 2008).]{.hero-note}
+
+::::
+
+```{=html}
+<svg class="hero-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0,40 C240,80 480,0 720,30 C960,60 1200,10 1440,40 L1440,80 L0,80 Z"></path></svg>
+```
+
+:::::
+
+```{r stats}
+#| output: asis
+cat(sprintf('<div class="stat-row lift">
+<div class="stat-box"><span class="num">%s</span><span class="lab">recall events, %s to %s</span></div>
+<div class="stat-box"><span class="num">%s</span><span class="lab">involve a fall or crash hazard</span></div>
+<div class="stat-box"><span class="num">%s</span><span class="lab">are %s failures, the most common failed part</span></div>
+<div class="stat-box"><span class="num">%s</span><span class="lab">e-bike recalls in %s to %s, against %s in the three years before</span></div>
+</div>',
+  fmt(n_events), first_year, this_year,
+  pct(share_fall),
+  pct(share_top_comp), str_to_lower(top_component$failed_component),
+  ebike_recent, last_full_year - 2, last_full_year, ebike_before))
+```
+
+## What this is
+
+Recalls are a regulator's response to a safety problem, so a collection of them can be read the way an epidemiologist reads disease notifications. This project applies that approach to bicycles:
+
+- **A case definition.** Written rules decide which recalls count (bicycles, e-bikes, components, and accessories) and which do not (helmets, exercise bikes, scooters, and motorbikes), with every decision recorded.
+- **Classification.** Each recall is coded by what was recalled, the part that failed, and the hazard it caused.
+- **Validation.** The rules were checked against 100 hand-labelled records, with a further 40 held back as an independent test.
+- **Caveats.** Recalls are passively reported and negotiated, and regulations have changed over time. Those limits shape what these numbers can and cannot say.
+
+The analysis is industry-wide. It does not rank or compare companies. Brand names appear only in the searchable table, as they appear in the official notices.
+
+## Key findings {#key-findings}
+
+```{r findings}
+#| output: asis
+cat(sprintf('<div class="finding-grid">
+<div class="finding"><h3>Falls dominate</h3><p>%s of recall events involve a fall or crash hazard. Fire, laceration, and chemical hazards together make up the rest.</p></div>
+<div class="finding"><h3>Forks fail most often</h3><p>%s of events trace back to the %s, ahead of stems and handlebars, wheels and hubs, and frames.</p></div>
+<div class="finding"><h3>E-bike recalls are rising</h3><p>There were %s e-bike recall events in %s to %s, against %s in the three years before. Some of that may reflect growth in e-bike sales, which these data cannot measure.</p></div>
+<div class="finding"><h3>E-bikes bring fire</h3><p>%s of e-bike recall events involve a fire or burn hazard, against %s of other bicycle recalls, mostly from batteries and chargers.</p></div>
+</div>',
+  pct(share_fall),
+  pct(share_top_comp), str_to_lower(top_component$failed_component),
+  ebike_recent, last_full_year - 2, last_full_year, ebike_before,
+  pct(ebike_fire_share), pct(other_fire_share)))
+```
+
+::: {.caveat-box}
+**Recalls are not injuries.** A recall shows that a regulator and a company acted on a problem, not how many people were hurt. There is no count of bikes sold, so these figures cannot be read as risk. More pages, including the full surveillance caveats, are on the way.
+:::

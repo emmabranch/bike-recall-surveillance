@@ -1,0 +1,81 @@
+/* Bike recall surveillance: project colours (Hi-vis) */
+/*-- scss:defaults --*/
+
+/*-- scss:rules --*/
+:root {
+  --eb-accent: #6b5f00;
+  --eb-accent-2: #e3c600;
+  --eb-accent-light: #ffe94d;
+  --eb-hero-glow: rgba(227, 198, 0, 0.22);
+}
+
+/* Pages without a hero: a little more space under the navbar */
+main.content:not(:has(.hero-full)) #title-block-header { margin-top: 1.5rem; }
+
+/* Home page: the hero carries the title, so the standard title block is hidden */
+body:has(.hero-full) #title-block-header { display: none; }
+
+/* Hero note is a short line of small print */
+.hero-full .hero-note { display: block; line-height: 1.5; }
+
+/* Finding cards on the home page */
+.finding-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+}
+.finding {
+  background: #ffffff;
+  border-left: 4px solid var(--eb-accent);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(16, 42, 67, 0.08), 0 8px 20px rgba(16, 42, 67, 0.06);
+  padding: 1rem 1.2rem;
+}
+.finding h3 { margin-top: 0; font-size: 1.1rem; }
+.finding p:last-child { margin-bottom: 0; }
+@media (max-width: 767.98px) { .finding-grid { grid-template-columns: 1fr; } }
+
+/* Caveat callout */
+.caveat-box {
+  background: #fdfbef;
+  border: 1px solid #ece4ad;
+  border-left: 4px solid var(--eb-accent);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  margin: 1.5rem 0;
+}
+
+/* ---------- Dashboard ---------- */
+.dash-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 1.5rem; }
+.dash-tiles .stat-box .lab { text-transform: none; }
+.dash-chart-title { font-family: "Fraunces", serif; font-weight: 700; font-size: 1.15rem; color: #0b2233; margin: 0.5rem 0 0.25rem; }
+.dash-note { font-size: 0.86rem; color: #5b7083; margin-top: 0.5rem; max-width: 60rem; }
+.small-multiples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+.sm-panel { background: #ffffff; border-radius: 10px; padding: 0.6rem 0.75rem 0.25rem; box-shadow: 0 1px 3px rgba(16, 42, 67, 0.08); }
+.sm-title { font-weight: 600; font-size: 0.92rem; color: #1f2a33; }
+.sm-total { font-weight: 400; color: #5b7083; margin-left: 0.35rem; }
+.panel-sidebar { background: #ffffff; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(16, 42, 67, 0.08); }
+.panel-sidebar form { margin-bottom: 0.6rem; }
+@media (max-width: 767.98px) { .dash-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Sidebar filters: labels above their controls, full width */
+.sidebar-heading { display: block; font-family: "Fraunces", serif; font-weight: 700; font-size: 1.1rem; color: #0b2233; margin-bottom: 0.5rem; }
+.panel-sidebar form { display: block !important; width: 100% !important; }
+.panel-sidebar form > label { display: block !important; width: auto !important; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.2rem; padding: 0; }
+.panel-sidebar form select, .panel-sidebar form input[type="number"] { max-width: 100%; }
+.panel-sidebar form > div { width: 100% !important; }
+
+/* Heatmap (component by hazard) */
+.dash-h2 { font-size: 1.25rem; margin-top: 2rem; }
+.heat-wrap { overflow-x: auto; }
+.heat { border-collapse: separate; border-spacing: 2px; font-size: 0.9rem; min-width: 520px; }
+.heat th { font-weight: 600; color: #1f2a33; padding: 0.35rem 0.6rem; text-align: left; white-space: nowrap; }
+.heat thead th { text-align: center; font-size: 0.85rem; }
+.heat td { min-width: 6.5rem; height: 2.1rem; text-align: center; border-radius: 4px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.heat td:hover, .heat td:focus { outline: 2px solid #0b2233; outline-offset: -2px; }
+.heat td.selected { outline: 3px solid #e3c600; outline-offset: -3px; font-weight: 700; }

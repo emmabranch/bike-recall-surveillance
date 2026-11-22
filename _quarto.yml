@@ -1,0 +1,40 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - dashboard.qmd
+  resources:
+    - .nojekyll
+    - data/bike_recalls.csv
+    - data/bike_recalls.parquet
+    - data/data_dictionary.csv
+
+website:
+  title: "Bike recall surveillance"
+  site-url: https://emmabranch.github.io/bike-recall-surveillance/
+  repo-url: https://github.com/emmabranch/bike-recall-surveillance
+  description: "Bicycle, e-bike, and component recalls from US CPSC and Health Canada, analysed with public health surveillance methods."
+  navbar:
+    left:
+      - href: index.qmd
+        text: Overview
+      - href: dashboard.qmd
+        text: Dashboard
+    right:
+      - icon: github
+        href: https://github.com/emmabranch/bike-recall-surveillance
+        aria-label: Code on GitHub
+  page-footer:
+    center: "Independent project using public data from the US Consumer Product Safety Commission and Health Canada. Not affiliated with or endorsed by either regulator, or by any company named in the records."
+
+format:
+  html:
+    theme: [flatly, brand, brand.scss, theme.scss]
+    include-after-body: footer.html
+    toc: false
+
+execute:
+  echo: false
+  warning: false
+  message: false

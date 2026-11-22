@@ -1,0 +1,218 @@
+---
+title: "Dashboard"
+subtitle: "Filter the recalls any way you like. Every panel updates together."
+page-layout: full
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+
+# One row per notice in each country's trend window. Within each event the US
+# notice comes first, so the dashboard counts it once (using the US record)
+# when both countries are selected.
+dash <- trend |>
+  arrange(event_id, desc(source == "US CPSC"), recall_date) |>
+  transmute(record_id, event_id, country, recall_year, case_status,
+            product_form, failed_component, hazard_group, is_ebike_related,
+            units_recalled, title, url)
+
+comp_order <- dash |>
+  count(failed_component, sort = TRUE) |>
+  pull(failed_component)
+comp_order <- c(setdiff(comp_order, "Other or unclear"), "Other or unclear")
+
+form_order <- c("Complete bicycle", "Complete e-bike", "Component", "Accessory",
+                "E-bike battery, charger, or power part", "Unclear")
+
+ojs_define(
+  recs = dash,
+  meta = list(
+    maxYear     = this_year,
+    minYear     = 2000,
+    forms       = intersect(form_order, unique(dash$product_form)),
+    components  = comp_order,
+    hazards     = c("Fall or crash", "Fire or burn", "Laceration", "Other"),
+    lastUpdated = format(max(recalls$recall_date), "%d %B %Y")
+  )
+)
+```
+
+```{ojs}
+//| output: false
+data = transpose(recs)
+maxYear = [].concat(meta.maxYear)[0]
+minYear = [].concat(meta.minYear)[0]
+lastUpdated = [].concat(meta.lastUpdated)[0]
+forms = [].concat(meta.forms)
+components = [].concat(meta.components)
+hazards = [].concat(meta.hazards)
+hazardColors = ["#2a78d6", "#eb6834", "#1baf7a", "#6250d6"]
+fmtN = d3.format(",")
+```
+
+::: {.panel-sidebar}
+
+[Filters]{.sidebar-heading}
+
+```{ojs}
+viewof countries = Inputs.checkbox(["United States", "Canada"], {label: "Country", value: ["United States", "Canada"]})
+viewof yearFrom = Inputs.range([minYear, maxYear], {step: 1, value: minYear, label: "From"})
+viewof yearTo = Inputs.range([minYear, maxYear], {step: 1, value: maxYear, label: "To"})
+viewof form = Inputs.select(["All", ...forms], {label: "What was recalled"})
+viewof component = Inputs.select(["All", ...components], {label: "Failed part"})
+viewof hazard = Inputs.select(["All", ...hazards], {label: "Hazard"})
+viewof ebikeOnly = Inputs.toggle({label: "E-bike related only", value: false})
+viewof includeProbable = Inputs.toggle({label: "Include probable cases", value: true})
+viewof measure = Inputs.radio(["Recall events", "Units recalled"], {label: "Count", value: "Recall events"})
+viewof view = Inputs.radio(["By hazard", "By failed part"], {label: "Chart", value: "By hazard"})
+```
+
+:::
+
+::: {.panel-fill}
+
+```{ojs}
+//| output: false
+lo = Math.min(yearFrom, yearTo)
+hi = Math.max(yearFrom, yearTo)
+
+// Rows passing every filter, then one row per recall event
+filtered = {
+  const rows = data.filter(d =>
+    countries.includes(d.country) &&
+    d.recall_year >= lo && d.recall_year <= hi &&
+    (form === "All" || d.product_form === form) &&
+    (component === "All" || d.failed_component === component) &&
+    (hazard === "All" || d.hazard_group === hazard) &&
+    (!ebikeOnly || d.is_ebike_related) &&
+    (includeProbable || d.case_status === "confirmed"));
+  const seen = new Set();
+  return rows.filter(d => {
+    if (seen.has(d.event_id)) return false;
+    seen.add(d.event_id);
+    return true;
+  });
+}
+
+w = d => measure === "Recall events" ? 1 : (d.units_recalled ?? 0)
+measureLabel = measure === "Recall events" ? "recall events" : "units recalled"
+years = d3.range(lo, hi + 1)
+```
+
+```{ojs}
+tiles = {
+  const n = filtered.length;
+  const fall = n ? filtered.filter(d => d.hazard_group === "Fall or crash").length / n : 0;
+  const ranked = d3.rollups(filtered.filter(d => d.failed_component !== "Other or unclear"),
+                            v => v.length, d => d.failed_component)
+                   .sort((a, b) => b[1] - a[1]);
+  const top = ranked.length ? ranked[0] : ["None", 0];
+  const eb = n ? filtered.filter(d => d.is_ebike_related).length / n : 0;
+  const units = d3.sum(filtered, d => d.units_recalled ?? 0);
+  const pct = x => `${Math.round(100 * x)}%`;
+  return html`<div class="stat-row dash-tiles">
+    <div class="stat-box"><span class="num">${fmtN(n)}</span><span class="lab">recall events (${fmtN(units)} units)</span></div>
+    <div class="stat-box"><span class="num">${pct(fall)}</span><span class="lab">fall or crash hazard</span></div>
+    <div class="stat-box"><span class="num">${n ? pct(top[1] / n) : "0%"}</span><span class="lab">top failed part: ${top[0].toLowerCase()}</span></div>
+    <div class="stat-box"><span class="num">${pct(eb)}</span><span class="lab">e-bike related</span></div>
+  </div>`;
+}
+```
+
+```{ojs}
+//| output: false
+totals = years.map(y => ({year: y, total: d3.sum(filtered.filter(d => d.recall_year === y), w)}))
+
+// Three-year trailing average, leaving out the current (partial) year
+rolling = totals
+  .filter(t => t.year < maxYear)
+  .map((t, i, arr) => i < 2 ? null : {year: t.year, avg: d3.mean(arr.slice(i - 2, i + 1), d => d.total)})
+  .filter(Boolean)
+
+byHazard = years.flatMap(y => hazards.map(h => ({
+  year: y,
+  hazard: h,
+  value: d3.sum(filtered.filter(d => d.recall_year === y && d.hazard_group === h), w)
+})))
+
+byPart = components.flatMap(c => years.map(y => ({
+  component: c,
+  year: y,
+  value: d3.sum(filtered.filter(d => d.recall_year === y && d.failed_component === c), w)
+})))
+```
+
+```{ojs}
+html`<div class="dash-chart-title">${view === "By hazard"
+  ? `${measure} per year, by hazard`
+  : `${measure} per year, by failed part (same scale in every panel)`}</div>`
+```
+
+```{ojs}
+{
+  if (view === "By hazard") {
+    const fig = Plot.plot({
+      width,
+      height: 380,
+      marginLeft: 56,
+      marginTop: 20,
+      x: {label: null, tickFormat: "d", domain: [lo, hi + 1]},
+      y: {label: measure === "Recall events" ? "Recall events per year" : "Units recalled per year", grid: true, tickFormat: "~s"},
+      color: {domain: hazards, range: hazardColors, legend: true},
+      marks: [
+        Plot.rectY(byHazard, {
+          x: "year", interval: 1, y: "value", fill: "hazard",
+          fillOpacity: d => d.year === maxYear ? 0.45 : 1,
+          insetLeft: 1, insetRight: 1,
+          tip: true,
+          title: d => `${d.year}${d.year === maxYear ? " (partial year)" : ""}\n${d.hazard}: ${fmtN(Math.round(d.value))} ${measureLabel}`
+        }),
+        Plot.lineY(rolling, {x: d => d.year + 0.5, y: "avg", stroke: "#0b2233", strokeWidth: 2, curve: "monotone-x"}),
+        Plot.ruleY([0])
+      ]
+    });
+    const wrap = html`<div class="dash-chart"></div>`;
+    wrap.append(fig);
+    return wrap;
+  }
+  const maxV = d3.max(byPart, d => d.value) || 1;
+  const grid = html`<div class="small-multiples"></div>`;
+  for (const c of components) {
+    const rows = byPart.filter(d => d.component === c);
+    const total = d3.sum(rows, d => d.value);
+    const p = Plot.plot({
+      width: 300, height: 130, marginLeft: 40, marginTop: 8,
+      x: {domain: [lo, hi + 1], tickFormat: "d", ticks: 4, label: null},
+      y: {domain: [0, maxV], ticks: 3, label: null, grid: true, tickFormat: "~s"},
+      marks: [
+        Plot.rectY(rows, {
+          x: "year", interval: 1, y: "value", fill: "#1f4e79",
+          fillOpacity: d => d.year === maxYear ? 0.45 : 1,
+          insetLeft: 0.5, insetRight: 0.5,
+          tip: true,
+          title: d => `${c}, ${d.year}: ${fmtN(Math.round(d.value))} ${measureLabel}`
+        }),
+        Plot.ruleY([0])
+      ]
+    });
+    const panel = html`<div class="sm-panel"><div class="sm-title">${c} <span class="sm-total">${fmtN(Math.round(total))}</span></div></div>`;
+    panel.append(p);
+    grid.append(panel);
+  }
+  return grid;
+}
+```
+
+```{ojs}
+html`<p class="dash-note">${view === "By hazard"
+  ? "Bars show each year's total, split by hazard. The dark line is the three-year average. "
+  : ""}${maxYear} is a partial year (data to ${lastUpdated}), shown paler. Canadian notices start in 2008, so totals before then are US only. Joint US and Canadian recalls count once.${measure === "Units recalled"
+  ? " Units are as stated in each notice: US notices usually count US units, and Canadian notices count units sold in Canada."
+  : ""}</p>`
+```
+
+```{ojs}
+DOM.download(() => new Blob([d3.csvFormat(filtered)], {type: "text/csv"}), "bike_recalls_filtered.csv", `Download these ${fmtN(filtered.length)} recalls (CSV)`)
+```
+
+:::

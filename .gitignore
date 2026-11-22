@@ -4,3 +4,8 @@
 .Ruserdata
 data-raw/
 data-interim/
+/.quarto/
+*_files/
+**/*.quarto_ipynb
+.DS_Store
+~$*
