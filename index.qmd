@@ -1,5 +1,5 @@
 ---
-pagetitle: "Bike recall surveillance: what 25 years of recalls say about which parts fail"
+pagetitle: "Bike recall surveillance: what 26 years of recalls say about which parts fail"
 title-prefix: ""  # stops Quarto adding the site name to the end of the page title
 author: "Emma Branch"
 description: "Bicycle, e-bike, and bicycle component recalls from US CPSC and Health Canada, classified by failed component and hazard, and analysed with public health surveillance methods."
@@ -39,10 +39,10 @@ Every bicycle, e-bike, and component recall published by the US Consumer Product
 ```{r stats}
 #| output: asis
 cat(sprintf('<div class="stat-row lift">
-<div class="stat-box"><span class="num">%s</span><span class="lab">recall events, %s to %s</span></div>
-<div class="stat-box"><span class="num">%s</span><span class="lab">involve a fall or crash hazard</span></div>
-<div class="stat-box"><span class="num">%s</span><span class="lab">are %s failures, the most common failed part</span></div>
-<div class="stat-box"><span class="num">%s</span><span class="lab">e-bike recalls in %s to %s, against %s in the three years before</span></div>
+<div class="stat-box"><span class="num">%s</span> <span class="lab">recall events, %s to %s</span></div>
+<div class="stat-box"><span class="num">%s</span> <span class="lab">involve a fall or crash hazard</span></div>
+<div class="stat-box"><span class="num">%s</span> <span class="lab">are %s failures, the most common failed part</span></div>
+<div class="stat-box"><span class="num">%s</span> <span class="lab">e-bike recalls in %s to %s, against %s in the three years before</span></div>
 </div>',
   fmt(n_events), first_year, this_year,
   pct(share_fall),

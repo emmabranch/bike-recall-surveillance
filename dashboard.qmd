@@ -158,10 +158,10 @@ tiles = {
   const units = d3.sum(filtered, d => d.units_recalled ?? 0);
   const pct = x => `${Math.round(100 * x)}%`;
   return html`<div class="stat-row dash-tiles">
-    <div class="stat-box"><span class="num">${fmtN(n)}</span><span class="lab">recall events (${fmtN(units)} units)</span></div>
-    <div class="stat-box"><span class="num">${pct(fall)}</span><span class="lab">fall or crash hazard</span></div>
-    <div class="stat-box"><span class="num">${n ? pct(top[1] / n) : "0%"}</span><span class="lab">top failed part: ${top[0].toLowerCase()}</span></div>
-    <div class="stat-box"><span class="num">${pct(eb)}</span><span class="lab">e-bike related</span></div>
+    <div class="stat-box"><span class="num">${fmtN(n)}</span> <span class="lab">recall events (${fmtN(units)} units)</span></div>
+    <div class="stat-box"><span class="num">${pct(fall)}</span> <span class="lab">fall or crash hazard</span></div>
+    <div class="stat-box"><span class="num">${n ? pct(top[1] / n) : "0%"}</span> <span class="lab">top failed part: ${top[0].toLowerCase()}</span></div>
+    <div class="stat-box"><span class="num">${pct(eb)}</span> <span class="lab">e-bike related</span></div>
   </div>`;
 }
 ```
