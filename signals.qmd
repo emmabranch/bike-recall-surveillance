@@ -1,0 +1,219 @@
+---
+title: "Signals"
+subtitle: "Is any kind of recall more common than its own recent history would predict?"
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+library(purrr)
+
+# Signal detection uses US CPSC notices only: one regulator, a consistent
+# series since 2000, and enough records for a baseline. Canadian counts are
+# too small, and start too late, to support it.
+us <- recalls |>
+  filter(source == "US CPSC", recall_year >= 2000) |>
+  mutate(doy = as.integer(format(recall_date, "%j")))
+
+data_to  <- max(recalls$recall_date)
+cut_doy  <- as.integer(format(data_to, "%j"))
+yrs      <- 2000:this_year
+haz_lv   <- c("Fall or crash", "Fire or burn", "Laceration", "Other")
+comp_lv  <- us |> count(failed_component, sort = TRUE) |> pull(failed_component)
+comp_lv  <- c(setdiff(comp_lv, "Other or unclear"), "Other or unclear")
+
+series_defs <- bind_rows(
+  tibble(group = "All", name = "All bicycle recalls"),
+  tibble(group = "E-bikes", name = "E-bike related"),
+  tibble(group = "Hazard", name = haz_lv),
+  tibble(group = "Failed part", name = comp_lv)
+)
+
+member <- function(group, name) {
+  switch(group,
+         "All"         = rep(TRUE, nrow(us)),
+         "E-bikes"     = us$is_ebike_related,
+         "Hazard"      = us$hazard_group == name,
+         "Failed part" = us$failed_component == name)
+}
+
+counts <- pmap_dfr(series_defs, function(group, name) {
+  m <- member(group, name)
+  tibble(group, name, year = yrs,
+         full = map_int(yrs, function(y) sum(m & us$recall_year == y)),
+         ytd  = map_int(yrs, function(y) sum(m & us$recall_year == y & us$doy <= cut_doy)))
+})
+
+# Baseline: the mean of the five previous years. The current, partial year is
+# compared year-to-date with the same part of the five previous years.
+baseline_years <- 5
+min_count      <- 3
+
+assess <- counts |>
+  group_by(group, name) |>
+  arrange(year, .by_group = TRUE) |>
+  mutate(
+    base_full = map_dbl(year, function(y) mean(full[year >= y - baseline_years & year <= y - 1])),
+    base_ytd  = map_dbl(year, function(y) mean(ytd[year >= y - baseline_years & year <= y - 1]))
+  ) |>
+  ungroup() |>
+  filter(year >= 2000 + baseline_years) |>
+  mutate(
+    is_ytd   = year == this_year,
+    observed = if_else(is_ytd, ytd, full),
+    expected = if_else(is_ytd, base_ytd, base_full),
+    limit95  = qpois(0.95, expected),
+    limit99  = qpois(0.99, expected),
+    status   = case_when(
+      observed >= min_count & observed > limit99 ~ "Signal",
+      observed >= min_count & observed > limit95 ~ "Watch",
+      TRUE ~ "Expected"
+    ),
+    label = if_else(is_ytd, paste0(year, " to date"), as.character(year))
+  )
+
+recent <- assess |>
+  filter(year >= last_full_year, status != "Expected") |>
+  arrange(desc(status == "Signal"), group, name)
+
+describe <- function(df) {
+  if (nrow(df) == 0) return("no series")
+  paste0("**", df$name, "** (", df$status, ": ", df$observed, " against ",
+         round(df$expected, 1), " expected, ", df$label, ")", collapse = "; ")
+}
+
+n_tests  <- nrow(assess)
+n_signal <- sum(assess$status == "Signal")
+n_watch  <- sum(assess$status == "Watch")
+
+ojs_define(
+  sig = assess |> select(group, name, year, label, observed, expected, limit95, limit99, status, is_ytd),
+  smeta = list(series = series_defs$name, groups = series_defs$group,
+               dataTo = format(data_to, "%d %B %Y"), thisYear = this_year)
+)
+```
+
+## How this works
+
+Surveillance systems for infectious disease flag a count when it rises above what the recent past would predict. This page applies the same idea to US bicycle recalls:
+
+- **Baseline.** For each kind of recall and each year, the expected count is the average of the five previous years.
+- **Threshold.** A Poisson model gives the range of counts that chance alone would produce around that average. A count above the 95th percentile is marked **Watch**, and a count above the 99th percentile is marked **Signal**. Counts below `r min_count` are never flagged, because one or two recalls are not a pattern.
+- **The current year** is incomplete, so it is compared year-to-date: recalls up to `r format(data_to, "%d %B")` this year against the same part of each of the five previous years.
+
+This is the logic of the historical limits method used in routine notifiable disease reporting, adapted to annual counts and small numbers.
+
+## What is flagged now
+
+For `r last_full_year` and `r this_year` to date, the flagged series are: `r describe(recent)`.
+
+Across all `r n_tests` series-year comparisons since 2005, `r n_signal` are Signals and `r n_watch` are Watches. With this many comparisons, chance alone would produce a few flags (at most about `r round(n_tests * 0.01)` Signals and `r round(n_tests * 0.04)` Watches at these thresholds), so a single flag is a reason to look closer, not proof of a problem.
+
+## Every series, every year
+
+```{ojs}
+//| output: false
+rows = transpose(sig)
+sm = ({
+  series: [].concat(smeta.series),
+  groups: [].concat(smeta.groups),
+  dataTo: [].concat(smeta.dataTo)[0],
+  thisYear: [].concat(smeta.thisYear)[0]
+})
+years = [...new Set(rows.map(d => d.year))].sort((a, b) => a - b)
+cellOf = new Map(rows.map(d => [d.name + "|" + d.year, d]))
+fmt1 = d3.format(".1f")
+```
+
+```{ojs}
+html`<p class="dash-note">Each cell is the count of US recall notices that year. <span class="sig-key sig-watch">△ Watch</span> <span class="sig-key sig-signal">▲ Signal</span> Hover for the expected count and limits, and <strong>click a series name</strong> to chart it below.</p>`
+```
+
+::: {.column-page}
+
+```{ojs}
+{
+  const table = html`<table class="sig-table">
+    <thead><tr><th></th>${years.map(y => html`<th scope="col">${y === sm.thisYear ? `${String(y).slice(2)}*` : `'${String(y).slice(2)}`}</th>`)}</tr></thead>
+    <tbody></tbody>
+  </table>`;
+  const tbody = table.querySelector("tbody");
+  let lastGroup = null;
+  sm.series.forEach((name, i) => {
+    const group = sm.groups[i];
+    if (group !== lastGroup) {
+      tbody.append(html`<tr class="sig-group"><th colspan=${years.length + 1}>${group}</th></tr>`);
+      lastGroup = group;
+    }
+    const tr = html`<tr></tr>`;
+    const th = html`<th scope="row" tabindex="0" class="sig-name">${name}</th>`;
+    const pick = () => { viewof chosen.value = name; viewof chosen.dispatchEvent(new Event("input", {bubbles: true})); };
+    th.onclick = pick;
+    th.onkeydown = e => { if (e.key === "Enter") pick(); };
+    if (name === chosen) th.classList.add("sig-chosen");
+    tr.append(th);
+    for (const y of years) {
+      const d = cellOf.get(name + "|" + y);
+      const td = html`<td>${d ? (d.status === "Signal" ? `▲${d.observed}` : d.status === "Watch" ? `△${d.observed}` : d.observed) : ""}</td>`;
+      if (d) {
+        td.classList.add(d.status === "Signal" ? "sig-signal" : d.status === "Watch" ? "sig-watch" : "sig-none");
+        td.title = `${name}, ${d.label}\nObserved: ${d.observed}\nExpected: ${fmt1(d.expected)}\nWatch above ${d.limit95}, Signal above ${d.limit99}\nStatus: ${d.status}`;
+      }
+      tr.append(td);
+    }
+    tbody.append(tr);
+  });
+  const wrap = html`<div class="sig-wrap"></div>`;
+  wrap.append(table);
+  return wrap;
+}
+```
+
+:::
+
+```{ojs}
+html`<p class="dash-note">* ${sm.thisYear} is year-to-date, to ${sm.dataTo}. Years start in 2005 because each needs five earlier years as its baseline.</p>`
+```
+
+## One series over time
+
+```{ojs}
+viewof chosen = Inputs.select(sm.series, {label: "Series", value: "All bicycle recalls"})
+```
+
+```{ojs}
+{
+  const d = rows.filter(r => r.name === chosen && !r.is_ytd);
+  const fig = Plot.plot({
+    width,
+    height: 320,
+    marginLeft: 48,
+    x: {label: null, tickFormat: "d"},
+    y: {label: "US recall notices per year", grid: true},
+    marks: [
+      Plot.areaY(d, {x: "year", y1: 0, y2: "limit99", fill: "#e8edf1", curve: "step"}),
+      Plot.lineY(d, {x: "year", y: "limit95", stroke: "#9aa5ae", strokeDasharray: "4,3", curve: "step"}),
+      Plot.lineY(d, {x: "year", y: "expected", stroke: "#5b7083", strokeWidth: 1.5}),
+      Plot.lineY(d, {x: "year", y: "observed", stroke: "#1f4e79", strokeWidth: 2}),
+      Plot.dot(d, {
+        x: "year", y: "observed", r: d => d.status === "Expected" ? 3.5 : 6,
+        fill: d => d.status === "Signal" ? "#c0392b" : d.status === "Watch" ? "#e3a400" : "#1f4e79",
+        stroke: "#ffffff", strokeWidth: 1.5,
+        tip: true,
+        title: d => `${d.year}: ${d.observed} observed, ${fmt1(d.expected)} expected\nWatch above ${d.limit95}, Signal above ${d.limit99}\n${d.status}`
+      }),
+      Plot.ruleY([0])
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+```{ojs}
+html`<p class="dash-note">Dark line and dots: observed. Grey line: expected (five-year average). Dashed line: Watch threshold. Shaded area: up to the Signal threshold. Larger amber or red dots are Watches and Signals. The year-to-date figure for ${sm.thisYear} is in the table above, not on this chart, because it covers only part of a year.</p>`
+```
+
+::: {.caveat-box}
+**What a signal means here.** A signal says a count is unusual for that series, not that products have become less safe. Recalls rise when a regulator focuses on a product type, when a new standard is introduced, or when one large company recalls several models at once. Each signal is a prompt to read the recalls behind it in the [dashboard](dashboard.qmd).
+:::

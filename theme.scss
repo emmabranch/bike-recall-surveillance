@@ -83,3 +83,28 @@ body:has(.hero-full) #title-block-header { display: none; }
 /* Recall table: let long titles wrap */
 .recall-table table td, .recall-table table th { white-space: normal !important; vertical-align: top; }
 .recall-table table { font-size: 0.92rem; }
+
+/* ---------- Signals ---------- */
+/* The grid scrolls inside its own box, so the series names (first column)
+   and the year headings (first row) can stay pinned while it scrolls. */
+.sig-wrap { overflow: auto; max-height: 80vh; border-radius: 8px; }
+.sig-table { border-collapse: separate; border-spacing: 2px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.sig-table thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: #f6f4ef; text-align: center; font-weight: 600; color: #5b7083; padding: 0.2rem 0.1rem;
+}
+.sig-table th[scope="row"], .sig-table .sig-group th {
+  position: sticky; left: 0; z-index: 1;
+  background: #f6f4ef;
+}
+.sig-table thead th:first-child { left: 0; z-index: 3; }
+.sig-table th[scope="row"] { text-align: left; white-space: nowrap; padding: 0.15rem 0.6rem 0.15rem 0; font-weight: 500; }
+.sig-table .sig-name { cursor: pointer; }
+.sig-table .sig-name:hover, .sig-table .sig-name:focus { text-decoration: underline; }
+.sig-table .sig-chosen { font-weight: 700; color: #0b2233; }
+.sig-table .sig-group th { text-align: left; font-family: "Fraunces", serif; font-weight: 700; color: #0b2233; padding-top: 0.7rem; }
+.sig-table td { min-width: 1.85rem; height: 1.6rem; text-align: center; border-radius: 3px; padding: 0 0.1rem; }
+.sig-none { background: #ffffff; color: #1f2a33; }
+.sig-watch { background: #fbe7a1; color: #4a3b00; font-weight: 700; }
+.sig-signal { background: #c0392b; color: #ffffff; font-weight: 700; }
+.sig-key { display: inline-block; padding: 0 0.4rem; border-radius: 3px; margin-right: 0.3rem; }
