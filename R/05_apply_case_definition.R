@@ -200,6 +200,7 @@ hc_h <- hc |>
   transmute(
     source           = "Health Canada",
     source_id        = hc_id,
+    hc_nid           = as.character(NID),
     recall_date,
     title            = str_remove(Title, "^Archived\\s*-\\s*"),
     product_text     = coalesce(Product, summary_product),
@@ -220,12 +221,25 @@ hc_h <- hc |>
   mutate(link_method = if_else(!is.na(linked_cpsc_id), "url", NA_character_)) |>
   select(-url_norm)
 
+# Record IDs: CPSC recall number, or Health Canada RA number. Where two
+# Canadian notices share an RA number, append the unique open data NID.
 combined <- bind_rows(cpsc_h, hc_h) |>
+  mutate(record_id = paste0(if_else(source == "US CPSC", "US-", "CA-"), source_id)) |>
+  add_count(record_id, name = "id_n") |>
   mutate(
-    record_id      = paste0(if_else(source == "US CPSC", "US-", "CA-"), source_id),
+    shared_hc_id = id_n > 1 & source == "Health Canada",
+    record_id    = if_else(shared_hc_id, paste0(record_id, "-NID", hc_nid), record_id)
+  ) |>
+  select(-id_n) |>
+  mutate(
     product_phrase = product_phrase_of(title),
     name_text      = name_text_of(title, product_text)
   )
+
+if (any(duplicated(combined$record_id))) {
+  stop("Duplicate record_id values remain: ",
+       paste(unique(combined$record_id[duplicated(combined$record_id)]), collapse = ", "))
+}
 
 # ---------------------------------------------------------------------------
 # 3. Stage 2 and 3 linking: date and name similarity, then manual links
@@ -295,9 +309,9 @@ combined <- combined |>
                                TRUE                ~ NA_character_),
     linked_cpsc_id = coalesce(linked_cpsc_id, sec_id),
     event_id       = case_when(
-      source == "US CPSC"    ~ paste0("EV-US-", source_id),
+      source == "US CPSC"    ~ paste0("EV-", record_id),
       !is.na(linked_cpsc_id) ~ paste0("EV-US-", linked_cpsc_id),
-      TRUE                   ~ paste0("EV-CA-", source_id)
+      TRUE                   ~ paste0("EV-", record_id)
     )
   ) |>
   select(-sec_id, -sec_method)
@@ -391,6 +405,15 @@ show_titles <- function(df, n) {
     cat(sep = "\n")
 }
 
+cat("\n========== RECORD IDS ==========\n")
+cat("Total records:", nrow(combined), "| unique record_ids:", n_distinct(combined$record_id), "\n")
+cat("Canadian notices sharing an RA number (NID appended):\n")
+combined |>
+  filter(shared_hc_id) |>
+  transmute(line = paste0(record_id, " | ", recall_date, " | ", str_trunc(title, 70))) |>
+  pull(line) |>
+  cat(sep = "\n")
+
 cat("\n========== JOINT RECALL LINKING ==========\n")
 print(count(filter(combined, source == "Health Canada"), link_method))
 cat("Canadian notices saying 'joint' still unlinked:",
@@ -408,14 +431,8 @@ print(table(US = pairs$us_status, Canada = pairs$ca_status))
 cat("\n========== STATUS BY SOURCE ==========\n")
 print(table(combined$case_status, combined$source))
 
-cat("\n========== REASON BY SOURCE ==========\n")
-print(table(combined$case_reason, combined$source))
-
 cases <- combined |> filter(is_case, in_trend_window)
 cat("\nDistinct recall events in trend window:", n_distinct(cases$event_id), "\n")
-
-cat("\n-- Maintenance chemicals excluded (EX08) --\n")
-show_titles(filter(combined, case_reason == "EX08_maintenance_chemical"), 20)
 
 cat("\n-- 10 confirmed --\n")
 show_titles(filter(combined, case_status == "confirmed"), 10)
