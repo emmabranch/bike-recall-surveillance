@@ -1,4 +1,4 @@
-# 06_classify_cases.R  (classification v1.1)
+# 06_classify_cases.R  (classification v1.2: "explo" no longer matches product names such as "Explore")
 # Purpose: classify each case by product form, failed component, and hazard;
 # extract incidents, injuries, deaths, units, origin, remedy; flag possible e-motos.
 # Reads:  data-interim/candidates_with_status.csv
@@ -44,7 +44,7 @@ structural_cats <- c("fork", "frame", "stem_handlebar", "brakes", "wheels_hubs",
 
 hazard_rules <- tribble(
   ~category,           ~group,          ~pattern,
-  "fire_burn",         "Fire or burn",  "\\b(fire|burns?|burning|overheat\\w*|thermal runaway|smok\\w*|flames?|explo\\w*|ignit\\w*)\\b",
+  "fire_burn",         "Fire or burn",  "\\b(fire|burns?|burning|overheat\\w*|thermal runaway|smok\\w*|flames?|explo(sion|sions|de|des|ded|ding|sive)|ignit\\w*)\\b",
   "fall_crash",        "Fall or crash", "\\b(falls?|falling|crash\\w*|loss of control|lose control|losing control|collisions?|thrown|eject\\w*)\\b",
   "laceration",        "Laceration",    "\\b(lacerat\\w*|cuts?|amputat\\w*|sharp edges?)\\b",
   "entrapment_pinch",  "Other",         "\\b(entrap\\w*|pinch\\w*|crush\\w*|strangulat\\w*|fingertips?)\\b",

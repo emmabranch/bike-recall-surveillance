@@ -3,6 +3,7 @@ project:
   output-dir: docs
   render:
     - index.qmd
+    - trends.qmd
     - dashboard.qmd
   resources:
     - .nojekyll
@@ -19,6 +20,8 @@ website:
     left:
       - href: index.qmd
         text: Overview
+      - href: trends.qmd
+        text: Trends
       - href: dashboard.qmd
         text: Dashboard
     right:

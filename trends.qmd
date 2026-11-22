@@ -1,0 +1,204 @@
+---
+title: "Trends"
+subtitle: "What has changed in bicycle recalls since 2000, and what has not."
+---
+
+```{r setup}
+source(here::here("R", "site_setup.R"))
+
+# Notices per year in each country's trend window, with a three-year average
+# (the current, partial year is left out of the average)
+yearly <- trend |>
+  count(country, recall_year) |>
+  complete(country, recall_year = 2000:this_year, fill = list(n = 0)) |>
+  filter(!(country == "Canada" & recall_year < 2008)) |>
+  arrange(country, recall_year) |>
+  group_by(country) |>
+  mutate(avg3 = if_else(recall_year < this_year,
+                        (n + lag(n) + lag(n, 2)) / 3, NA_real_)) |>
+  ungroup()
+
+us_rate <- function(y1, y2) {
+  yearly |>
+    filter(country == "United States", recall_year >= y1, recall_year <= y2) |>
+    summarise(m = mean(n)) |>
+    pull(m)
+}
+r_early  <- us_rate(2000, 2004)
+r_mid    <- us_rate(2010, 2019)
+r_recent <- us_rate(2020, 2024)
+
+# Two periods of roughly equal length, compared on the mix of recalls
+p_early <- "2000 to 2012"
+p_late  <- paste0("2013 to ", this_year)
+events_p <- events |>
+  mutate(period = if_else(recall_year <= 2012, p_early, p_late))
+
+shift <- function(var) {
+  events_p |>
+    count(period, value = .data[[var]]) |>
+    group_by(period) |>
+    mutate(share = n / sum(n)) |>
+    ungroup()
+}
+comp_shift <- shift("failed_component")
+form_shift <- shift("product_form") |> filter(value != "Unclear")
+
+share_of <- function(tab, val, per) {
+  x <- tab$share[tab$value == val & tab$period == per]
+  if (length(x) == 0) 0 else x
+}
+
+# Fire and burn hazards, by five-year period
+p5_breaks <- c(1999, 2004, 2009, 2014, 2019, 2024, this_year)
+p5_labels <- c("2000 to 2004", "2005 to 2009", "2010 to 2014", "2015 to 2019",
+               "2020 to 2024", paste0("2025 to ", this_year))
+fire <- events |>
+  filter(hazard_group == "Fire or burn") |>
+  mutate(period = cut(recall_year, p5_breaks, labels = p5_labels),
+         group  = if_else(is_ebike_related, "E-bike related", "Other bicycle products")) |>
+  count(period, group) |>
+  mutate(period = as.character(period))
+fire_total <- function(p) sum(fire$n[fire$period == p])
+
+ojs_define(
+  yearly = yearly,
+  compShift = comp_shift,
+  formShift = form_shift,
+  fire = fire,
+  tmeta = list(thisYear = this_year, pEarly = p_early, pLate = p_late, p5 = p5_labels)
+)
+```
+
+```{ojs}
+//| output: false
+tm = ({
+  thisYear: [].concat(tmeta.thisYear)[0],
+  pEarly: [].concat(tmeta.pEarly)[0],
+  pLate: [].concat(tmeta.pLate)[0],
+  p5: [].concat(tmeta.p5)
+})
+periodColors = ["#eb6834", "#2a78d6"]
+
+dumbbell = (long, height) => {
+  const rows = transpose(long);
+  const late = new Map(rows.filter(d => d.period === tm.pLate).map(d => [d.value, d.share]));
+  const early = new Map(rows.filter(d => d.period === tm.pEarly).map(d => [d.value, d.share]));
+  const cats = [...new Set(rows.map(d => d.value))].sort((a, b) => (late.get(b) ?? 0) - (late.get(a) ?? 0));
+  const pairs = cats.map(c => ({value: c, early: early.get(c) ?? 0, late: late.get(c) ?? 0}));
+  const fig = Plot.plot({
+    width,
+    height,
+    marginLeft: 250,
+    marginRight: 20,
+    x: {label: "Share of recall events", tickFormat: "%", grid: true, domain: [0, Math.max(0.3, d3.max(rows, d => d.share) * 1.1)]},
+    y: {label: null, domain: cats},
+    color: {domain: [tm.pEarly, tm.pLate], range: periodColors, legend: true},
+    marks: [
+      Plot.ruleY(pairs, {y: "value", x1: "early", x2: "late", stroke: "#b9c3cb", strokeWidth: 2}),
+      Plot.dot(rows, {
+        x: "share", y: "value", fill: "period", r: 6, stroke: "#ffffff", strokeWidth: 2,
+        tip: true,
+        title: d => `${d.value}\n${d.period}: ${Math.round(100 * d.share)}% (${d.n} events)`
+      })
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+## Recalls have not taken off
+
+A useful first question in surveillance is whether the count itself is changing. For bicycles, the answer is: not much. The US averaged about `r round(r_early)` bicycle recall notices a year in 2000 to 2004, about `r round(r_mid)` a year through the 2010s, and about `r round(r_recent)` a year in 2020 to 2024. Canada, from 2008, runs at a similar or lower level.
+
+```{ojs}
+{
+  const rows = transpose(yearly);
+  const fig = Plot.plot({
+    width,
+    height: 340,
+    marginLeft: 48,
+    x: {label: null, tickFormat: "d"},
+    y: {label: "Recall notices per year", grid: true},
+    color: {domain: ["United States", "Canada"], range: ["#2a78d6", "#eb6834"], legend: true},
+    marks: [
+      Plot.dot(rows, {
+        x: "recall_year", y: "n", fill: "country", r: 3.5, fillOpacity: 0.35,
+        tip: true,
+        title: d => `${d.country}, ${d.recall_year}${d.recall_year === tm.thisYear ? " (partial year)" : ""}: ${d.n} notices`
+      }),
+      Plot.lineY(rows.filter(d => d.avg3 !== null), {x: "recall_year", y: "avg3", stroke: "country", strokeWidth: 2.5, curve: "monotone-x"}),
+      Plot.ruleY([0])
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+[Dots are single years and lines are three-year averages. `r this_year` is a partial year and is left out of the averages.]{.dash-note}
+
+A flat count does not mean flat risk. Bike sales, the number of models on the market, and regulators' priorities all changed over this period, and none of them are measured here. What the count does show is that there has been no surge in bicycle recalls overall. The changes are in **what** gets recalled.
+
+## The mix of failed parts is shifting
+
+Comparing `r p_early` with `r p_late`, forks fell from `r pct(share_of(comp_shift, "Fork", p_early))` to `r pct(share_of(comp_shift, "Fork", p_late))` of recall events, and stems and handlebars from `r pct(share_of(comp_shift, "Stem or handlebar", p_early))` to `r pct(share_of(comp_shift, "Stem or handlebar", p_late))`. Accessories rose from `r pct(share_of(comp_shift, "Accessory", p_early))` to `r pct(share_of(comp_shift, "Accessory", p_late))`, and e-bike electrical systems from `r pct(share_of(comp_shift, "E-bike electrical system", p_early))` to `r pct(share_of(comp_shift, "E-bike electrical system", p_late))`.
+
+```{ojs}
+dumbbell(compShift, 420)
+```
+
+[Each pair of dots shows one failed part's share of all recall events in the two periods. Parts are ordered by their share in the recent period.]{.dash-note}
+
+Forks and stems are still the most recalled structural parts. Their falling share may reflect real improvements in design and testing, but it may equally reflect more recalls of other kinds diluting them. Shares alone cannot separate the two.
+
+## E-bikes now make up a real share of recalls
+
+Complete e-bikes went from `r pct(share_of(form_shift, "Complete e-bike", p_early))` of recall events in `r p_early` to `r pct(share_of(form_shift, "Complete e-bike", p_late))` in `r p_late`. Recalls of components sold on their own fell from `r pct(share_of(form_shift, "Component", p_early))` to `r pct(share_of(form_shift, "Component", p_late))`.
+
+```{ojs}
+dumbbell(formShift, 300)
+```
+
+## Fire is a new kind of bicycle hazard
+
+For most of this period, bicycle recalls were about falls. Fire and burn hazards were rare: fire recall events numbered `r fire_total("2000 to 2004")` in 2000 to 2004 and `r fire_total("2010 to 2014")` in 2010 to 2014. There were `r fire_total(p5_labels[6])` in `r p5_labels[6]` alone, most of them e-bike batteries and chargers, or battery-powered accessories such as lights.
+
+```{ojs}
+{
+  const rows = transpose(fire);
+  const fig = Plot.plot({
+    width,
+    height: 300,
+    marginLeft: 48,
+    x: {label: null, domain: tm.p5},
+    y: {label: "Fire or burn recall events", grid: true},
+    color: {domain: ["Other bicycle products", "E-bike related"], range: ["#2a78d6", "#eb6834"], legend: true},
+    marks: [
+      Plot.barY(rows, {
+        x: "period", y: "n", fill: "group", order: ["Other bicycle products", "E-bike related"],
+        insetLeft: 4, insetRight: 4,
+        tip: true,
+        title: d => `${d.period}\n${d.group}: ${d.n} recall events`
+      }),
+      Plot.ruleY([0])
+    ]
+  });
+  const wrap = html`<div class="dash-chart"></div>`;
+  wrap.append(fig);
+  return wrap;
+}
+```
+
+[The last bar covers less than two years. Counts are small, so a single recall moves them noticeably.]{.dash-note}
+
+The numbers are small, but the direction matters. A fall hazard usually comes from a part breaking while someone rides. A fire hazard can occur while a bike is charging, unattended, indoors, which brings in people who were never riding it.
+
+::: {.caveat-box}
+**Reading these trends.** Recalls are counted, not injuries, and nothing here is adjusted for how many bikes were sold. Canada's figures start in 2008, and in 2021 Canada repealed its federal definition of a power-assisted bicycle, which may affect how e-bike problems reach Health Canada.
+:::
+
+**Explore further** in the [dashboard](dashboard.qmd), where every filter, part, and hazard can be combined.
