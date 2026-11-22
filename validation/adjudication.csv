@@ -1,0 +1,8 @@
+val_id,field,original_label,adjudicated_label,reason
+V067,is_case,Yes,No,Toy tricycle; out of scope under the case definition
+V086,is_case,No,Yes,Bicycle pumps are accessories; in scope
+V070,product_form,Complete bicycle,Complete e-bike,Brompton Electric is an e-bike
+V064,failed_component,Other or unclear,Brakes,Missing foot brake codes as Brakes; labelling guide clarified
+V034,is_case,Yes,No,"Children's electric mini bike; toy, out of scope"
+V016,product_form,Accessory,Complete bicycle,Whole bicycles recalled; the failing part was the recumbent seat back
+V016,failed_component,Accessory,Saddle or seatpost,The failing part was the recumbent seat back

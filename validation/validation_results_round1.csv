@@ -1,0 +1,14 @@
+measure,estimate,lower,upper,n,note
+Case definition PPV,0.988,0.933,0.998,80,"Wilson interval, unweighted"
+Case definition NPV,0.9,0.699,0.972,20,"Wilson interval, unweighted"
+Case definition sensitivity (weighted),0.975,0.939,1,100,"Stratified bootstrap, relative to candidate pool"
+Case definition specificity (weighted),0.942,0.837,1,100,"Stratified bootstrap, relative to candidate pool"
+product_form accuracy,0.823,0.724,0.891,79,"Wilson interval, unweighted"
+product_form accuracy (weighted),0.808,0.714,0.894,79,Stratified bootstrap
+product_form kappa,0.732,0.606,0.846,79,"Cohen's kappa, stratified bootstrap"
+failed_component accuracy,0.924,0.844,0.965,79,"Wilson interval, unweighted"
+failed_component accuracy (weighted),0.932,0.872,0.98,79,Stratified bootstrap
+failed_component kappa,0.911,0.839,0.971,79,"Cohen's kappa, stratified bootstrap"
+hazard_group accuracy,0.924,0.844,0.965,79,"Wilson interval, unweighted"
+hazard_group accuracy (weighted),0.923,0.857,0.98,79,Stratified bootstrap
+hazard_group kappa,0.642,0.324,0.879,79,"Cohen's kappa, stratified bootstrap"

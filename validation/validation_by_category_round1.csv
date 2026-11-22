@@ -1,0 +1,21 @@
+field,category,n_label,n_rule,precision,recall
+product_form,Accessory,6,4,1,0.667
+product_form,Complete bicycle,35,44,0.75,0.943
+product_form,Complete e-bike,13,14,0.929,1
+product_form,Component,24,15,0.933,0.583
+product_form,"E-bike battery, charger, or power part",1,1,1,1
+product_form,Unclear,0,1,0,NA
+failed_component,Accessory,9,7,1,0.778
+failed_component,Brakes,3,4,0.75,1
+failed_component,Drivetrain or pedals,7,8,0.875,1
+failed_component,"E-bike battery, charger, or motor",4,5,0.8,1
+failed_component,Fork,20,20,1,1
+failed_component,Frame,9,10,0.9,1
+failed_component,Other or unclear,4,2,1,0.5
+failed_component,Saddle or seatpost,1,2,0.5,1
+failed_component,Stem or handlebar,12,13,0.923,1
+failed_component,"Wheels, hubs, or tires",10,8,1,0.8
+hazard_group,Fall or crash,73,67,1,0.918
+hazard_group,Fire or burn,3,3,1,1
+hazard_group,Laceration,1,1,1,1
+hazard_group,Other,2,8,0.25,1

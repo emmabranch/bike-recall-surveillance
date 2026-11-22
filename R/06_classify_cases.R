@@ -1,4 +1,4 @@
-# 06_classify_cases.R
+# 06_classify_cases.R  (classification v1.1)
 # Purpose: classify each case by product form, failed component, and hazard;
 # extract incidents, injuries, deaths, units, origin, remedy; flag possible e-motos.
 # Reads:  data-interim/candidates_with_status.csv
@@ -27,17 +27,20 @@ cases <- cand |> filter(is_case)
 # Rule tables (order matters: earlier rows win ties)
 # ---------------------------------------------------------------------------
 component_rules <- tribble(
-  ~category,          ~label,                              ~pattern,
-  "ebike_electrical", "E-bike battery, charger, or motor", "\\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\\w*)\\b",
-  "fork",             "Fork",                              "\\b(forks?|steerers?|steerer tubes?|steering tubes?|fork crowns?|crown races?)\\b",
-  "frame",            "Frame",                             "\\b(frames?|framesets?|top ?tubes?|down ?tubes?|head ?tubes?|seat tubes?|seat ?stays?|chain ?stays?|rear triangles?|welds?|swing ?arms?|rear shocks?|shock mounts?|linkages?|dropouts?|folding hinges?|frame hinges?)\\b",
-  "stem_handlebar",   "Stem or handlebar",                 "\\b(stems?|stem raisers?|handlebars?|handle bars?|handleposts?|handle posts?|steering posts?|aero ?bars?|bar ends?|steering columns?|headsets?)\\b",
-  "brakes",           "Brakes",                            "\\b(brakes?|braking|foot ?brakes?|hand ?brakes?|coaster brakes?|calipers?|brake levers?|brake pads?|brake cables?|brake hoses?|rotors?|master cylinders?)\\b",
-  "wheels_hubs",      "Wheels, hubs, or tires",            "\\b(wheels?|wheelsets?|rims?|spokes?|hubs?|axles?|quick[- ]releases?|skewers?|thru[- ]axles?|tires?|tyres?|inner tubes?|valves?|freehubs?)\\b",
-  "drivetrain",       "Drivetrain or pedals",              "\\b(cranks?|crank ?arms?|cranksets?|chainrings?|chains?|cassettes?|freewheels?|derailleurs?|derailleur hangers?|bottom brackets?|pedals?|pedal axles?|spindles?|shifters?|shift levers?|gears?|gear hubs?|belts?|belt drives?|sprockets?|cogs?)\\b",
-  "seat_seatpost",    "Saddle or seatpost",                "\\b(seat ?posts?|saddles?|seats?|seat clamps?|saddle rails?|seat rails?)\\b",
-  "accessory",        "Accessory",                         "\\b(lights?|lamps?|headlights?|taillights?|locks?|bags?|panniers?|racks?|carriers?|hooks?|hitch(es)?|adaptor bars?|adapter bars?|cradles?|pumps?|bells?|fenders?|mudguards?|kickstands?|baskets?|reflectors?|computers?|mounts?|brackets?|hoists?|straps?|bottle cages?|trainers?|flywheels?|grips?|keys?)\\b"
+  ~category,          ~label,                      ~pattern,
+  "ebike_electrical", "E-bike electrical system",  "\\b(batter(y|ies)|battery packs?|lithium|cells?|chargers?|charging|motors?|controllers?|wiring|wire harness(es)?|wires?|connectors?|displays?|throttles?|electrical|power suppl(y|ies)|accelerat\\w*)\\b",
+  "fork",             "Fork",                      "\\b(forks?|steerers?|steerer tubes?|steer tubes?|steer tube clamps?|steering tubes?|fork crowns?|crown races?)\\b",
+  "frame",            "Frame",                     "\\b(frames?|framesets?|top ?tubes?|down ?tubes?|head ?tubes?|seat tubes?|seat ?stays?|chain ?stays?|rear triangles?|welds?|swing ?arms?|rear shocks?|shock mounts?|linkages?|dropouts?|folding hinges?|frame hinges?)\\b",
+  "stem_handlebar",   "Stem or handlebar",         "\\b(stems?|stem raisers?|handlebars?|handle bars?|handleposts?|handle posts?|steering posts?|aero ?bars?|bar ends?|steering columns?|headsets?)\\b",
+  "brakes",           "Brakes",                    "\\b(brakes?|braking|foot ?brakes?|hand ?brakes?|coaster brakes?|calipers?|brake levers?|brake pads?|brake cables?|brake hoses?|rotors?|master cylinders?)\\b",
+  "wheels_hubs",      "Wheels, hubs, or tires",    "\\b(wheels?|wheelsets?|rims?|spokes?|hubs?|axles?|quick[- ]releases?|skewers?|thru[- ]axles?|tires?|tyres?|inner tubes?|valves?|freehubs?)\\b",
+  "drivetrain",       "Drivetrain or pedals",      "\\b(cranks?|crank ?arms?|cranksets?|chainrings?|chains?|cassettes?|freewheels?|derailleurs?|derailleur hangers?|bottom brackets?|pedals?|pedal axles?|spindles?|shifters?|shift levers?|gears?|gear hubs?|belts?|belt drives?|sprockets?|cogs?)\\b",
+  "seat_seatpost",    "Saddle or seatpost",        "\\b(seat ?posts?|saddles?|seats?|seat clamps?|saddle rails?|seat rails?)\\b",
+  "accessory",        "Accessory",                 "\\b(lights?|lamps?|headlights?|taillights?|locks?|bags?|panniers?|racks?|carriers?|hooks?|hitch(es)?|adaptor bars?|adapter bars?|cradles?|pumps?|bells?|fenders?|mudguards?|kickstands?|baskets?|reflectors?|computers?|mounts?|brackets?|hoists?|straps?|bottle cages?|trainers?|flywheels?|grips?|keys?)\\b"
 )
+
+structural_cats <- c("fork", "frame", "stem_handlebar", "brakes", "wheels_hubs",
+                     "drivetrain", "seat_seatpost")
 
 hazard_rules <- tribble(
   ~category,           ~group,          ~pattern,
@@ -54,9 +57,17 @@ ebike_pat <- paste0("\\b(e-?bikes?|ebikes?|electric (bicycles?|bikes?|tricycles?
                     "e-?trikes?|pedal[- ]assist(ed)?|pedelecs?|power[- ]assisted bicycles?|",
                     "electric[- ]assist|motori[sz]ed bicycles?)\\b")
 
+# A bike word used as the product itself: plural, or singular followed by a
+# whole boundary word or punctuation ("Bicycle Forks" is NOT a complete bike)
 complete_pat <- paste0("\\b(e-?bikes|ebikes|bicycles|bikes|tricycles|trikes|pedelecs)\\b|",
                        "\\b(e-?bike|ebike|bicycle|bike|tricycle|trike|pedelec)\\b",
-                       "(?=\\s*($|recalled|recall|due|with|equipped|and|sold|from|for|by|[(;,:.]))")
+                       "(?=\\s*(?:$|[(;,:.]|(?:recalled|recall|due|with|equipped|and|sold|from|for|by)\\b))")
+
+# Phrases describing what a part was sold on or for, removed before deciding
+# whether the product itself is a whole bike
+fitted_to_pat <- "\\s+(?:(?:sold|used|installed|fitted|found|offered)\\s+)?(?:on|for|in)\\s+.*$"
+
+generic_parts_pat <- "\\b(components?|parts?)\\b"
 
 foot_brake_pat <- "\\b(foot ?brakes?|coaster brakes?)\\b"
 
@@ -158,7 +169,7 @@ extract_countries <- function(text) {
 }
 
 # ---------------------------------------------------------------------------
-# 1. Hazard
+# 1. Hazard (first pass)
 # ---------------------------------------------------------------------------
 cases <- cases |>
   mutate(
@@ -168,7 +179,6 @@ cases <- cases |>
     hazard_detail       = coalesce(priority_match(hazard_primary_text, hazard_rules),
                                    priority_match(hazard_all_text, hazard_rules),
                                    "other_injury"),
-    hazard_group        = coalesce(hazard_rules$group[match(hazard_detail, hazard_rules$category)], "Other"),
     hazards_mentioned   = all_matches(hazard_all_text, hazard_rules)
   )
 
@@ -179,17 +189,20 @@ cases <- cases |>
   mutate(
     head_text = str_remove(coalesce(product_phrase, ""),
                            rx("\\s+(due to|recalled|recall|because|posing|poses|pose|sold|announced|reannounced)\\b.*$")),
-    head_cat  = coalesce(last_mention(head_text, component_rules),
+    head_core = str_remove(head_text, rx(fitted_to_pat)),
+    head_cat  = coalesce(last_mention(head_core, component_rules),
                          last_mention(product_text, component_rules)),
-    is_complete  = has(name_text, complete_pat),
+    term_in_head = !is.na(last_mention(head_core, component_rules)) | has(head_core, generic_parts_pat),
+    is_complete  = has(head_core, complete_pat) | (!term_in_head & has(name_text, complete_pat)),
     is_ebike_any = has(name_text, ebike_pat) | has(description_text, ebike_pat),
     product_form = case_when(
-      is_complete & is_ebike_any     ~ "Complete e-bike",
-      is_complete                    ~ "Complete bicycle",
-      head_cat == "ebike_electrical" ~ "E-bike battery, charger, or power part",
-      head_cat == "accessory"        ~ "Accessory",
-      !is.na(head_cat)               ~ "Component",
-      TRUE                           ~ "Unclear"
+      is_complete & is_ebike_any                      ~ "Complete e-bike",
+      is_complete                                     ~ "Complete bicycle",
+      head_cat == "ebike_electrical"                  ~ "E-bike battery, charger, or power part",
+      head_cat == "accessory"                         ~ "Accessory",
+      !is.na(head_cat)                                ~ "Component",
+      has(head_core, generic_parts_pat)               ~ "Component",
+      TRUE                                            ~ "Unclear"
     ),
     is_ebike_related = product_form %in% c("Complete e-bike", "E-bike battery, charger, or power part") |
       is_ebike_any,
@@ -198,7 +211,7 @@ cases <- cases |>
     failed_cat = case_when(
       hazard_detail == "chemical_lead"                              ~ "other",
       product_form %in% c("Component", "Accessory",
-                          "E-bike battery, charger, or power part") ~ head_cat,
+                          "E-bike battery, charger, or power part") ~ coalesce(head_cat, "other"),
       has(hazard_text, foot_brake_pat)                              ~ "brakes",
       !is.na(hazard_comp_cat)                                       ~ hazard_comp_cat,
       !is.na(name_comp_cat)                                         ~ name_comp_cat,
@@ -210,7 +223,20 @@ cases <- cases |>
   )
 
 # ---------------------------------------------------------------------------
-# 3. Incidents, injuries, deaths, units, origin
+# 3. Hazard (second pass): generic injury with a structural failure, or the
+#    old CPSC "Vehicle Accident" code, is a fall or crash
+# ---------------------------------------------------------------------------
+cases <- cases |>
+  mutate(
+    hazard_detail = if_else(
+      hazard_detail == "other_injury" &
+        (has(hazard_text, "vehicle accident") | failed_cat %in% structural_cats),
+      "fall_crash", hazard_detail),
+    hazard_group = coalesce(hazard_rules$group[match(hazard_detail, hazard_rules$category)], "Other")
+  )
+
+# ---------------------------------------------------------------------------
+# 4. Incidents, injuries, deaths, units, origin
 # ---------------------------------------------------------------------------
 cases <- cases |>
   mutate(
@@ -235,7 +261,7 @@ cases <- cases |>
   )
 
 # ---------------------------------------------------------------------------
-# 4. Possible e-moto flag
+# 5. Possible e-moto flag
 # ---------------------------------------------------------------------------
 cases <- cases |>
   mutate(
@@ -262,7 +288,7 @@ cases <- cases |>
   )
 
 # ---------------------------------------------------------------------------
-# 5. Write the public dataset
+# 6. Write the public dataset
 # ---------------------------------------------------------------------------
 bike_recalls <- cases |>
   transmute(
@@ -290,9 +316,11 @@ write_csv(bike_recalls, "data/bike_recalls.csv")
 bind_rows(
   component_rules |> transmute(dimension = "failed_component", category, label, pattern),
   hazard_rules    |> transmute(dimension = "hazard", category, label = group, pattern),
-  tibble(dimension = "product_form", category = c("complete", "ebike"),
-         label = c("Bike word used as the product", "E-bike terms"),
-         pattern = c(complete_pat, ebike_pat)),
+  tibble(dimension = "product_form",
+         category = c("complete", "ebike", "fitted_to", "generic_parts"),
+         label = c("Bike word used as the product", "E-bike terms",
+                   "Phrase removed before the complete-bike check", "Generic parts wording"),
+         pattern = c(complete_pat, ebike_pat, fitted_to_pat, generic_parts_pat)),
   tibble(dimension = "special", category = c("foot_brake", "death"),
          label = c("Missing foot brake or coaster brake codes as Brakes", "Death mentioned"),
          pattern = c(foot_brake_pat, death_pat))
@@ -300,7 +328,7 @@ bind_rows(
   write_csv("methods/classification_rules.csv")
 
 # ---------------------------------------------------------------------------
-# 6. Report
+# 7. Report
 # ---------------------------------------------------------------------------
 cat("\n========== CASES ==========\n")
 print(count(bike_recalls, source))
@@ -314,39 +342,6 @@ print(table(bike_recalls$failed_component, bike_recalls$source))
 cat("\n========== HAZARD GROUP ==========\n")
 print(table(bike_recalls$hazard_group, bike_recalls$source))
 
-cat("\n========== E-BIKE RELATED, BY YEAR (trend window, notices) ==========\n")
-eb <- filter(bike_recalls, in_trend_window, is_ebike_related)
-print(table(year = eb$recall_year, eb$source))
-
-cat("\n========== EXTRACTION COMPLETENESS (% non-missing) ==========\n")
-bike_recalls |>
-  group_by(source) |>
-  summarise(n = n(),
-            incidents = round(100 * mean(!is.na(incidents_reported))),
-            injuries  = round(100 * mean(!is.na(injuries_reported))),
-            death_mentioned = sum(death_mentioned),
-            units     = round(100 * mean(!is.na(units_recalled))),
-            origin    = round(100 * mean(!is.na(origin_primary))),
-            median_units = median(units_recalled, na.rm = TRUE)) |>
-  print(width = Inf)
-
-cat("\n========== NOTICES MENTIONING A DEATH ==========\n")
-cases |>
-  filter(death_mentioned) |>
-  transmute(line = paste0(record_id, " | ", str_trunc(title, 80),
-                          "\n   ", str_trunc(death_text, 220))) |>
-  pull(line) |>
-  cat(sep = "\n")
-
-cat("\n========== E-MOTO DIAGNOSTIC ==========\n")
-cases |>
-  filter(is_ebike_related, !is.na(max_mph) | !is.na(max_kmh) | !is.na(max_watts)) |>
-  transmute(line = paste0(record_id, " | mph ", max_mph, " | km/h ", max_kmh,
-                          " | W ", max_watts, " | ", str_trunc(title, 70))) |>
-  pull(line) |>
-  cat(sep = "\n")
-cat("Possible e-motos flagged:", sum(bike_recalls$possible_emoto), "\n")
-
 set.seed(2026)
 show_cases <- function(df, n) {
   if (nrow(df) == 0) { cat("(none)\n"); return(invisible()) }
@@ -356,8 +351,6 @@ show_cases <- function(df, n) {
       record_id, " | ", str_trunc(title, 80),
       "\n   form: ", product_form, " | component: ", failed_component,
       " | hazard: ", hazard_detail,
-      " | incidents: ", incidents_reported, " | injuries: ", injuries_reported,
-      " | units: ", units_recalled,
       "\n   hazard text: ", str_trunc(coalesce(hazard_text, ""), 170))) |>
     pull(line) |>
     cat(sep = "\n")
