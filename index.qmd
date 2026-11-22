@@ -1,5 +1,6 @@
 ---
 pagetitle: "Bike recall surveillance: what 25 years of recalls say about which parts fail"
+title-prefix: ""  # stops Quarto adding the site name to the end of the page title
 author: "Emma Branch"
 description: "Bicycle, e-bike, and bicycle component recalls from US CPSC and Health Canada, classified by failed component and hazard, and analysed with public health surveillance methods."
 ---
