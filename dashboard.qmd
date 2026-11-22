@@ -55,6 +55,10 @@ setInput = (input, value) => {
   input.dispatchEvent(new Event("input", {bubbles: true}));
 }
 
+// Search text for each recall event: the titles of every notice in it, so a
+// joint recall matches a word in either the US or the Canadian title
+eventText = d3.rollup(data, v => v.map(d => `${d.title} ${d.product_form} ${d.failed_component} ${d.hazard_group}`).join(" ").toLowerCase(), d => d.event_id)
+
 // Countries reporting each recall event (joint events have both)
 eventCountries = d3.rollup(data, v => new Set(v.map(d => d.country)), d => d.event_id)
 ```
@@ -64,6 +68,7 @@ eventCountries = d3.rollup(data, v => new Set(v.map(d => d.country)), d => d.eve
 [Filters]{.sidebar-heading}
 
 ```{ojs}
+viewof query = Inputs.text({label: "Search notices", placeholder: "Brand, product, or part"})
 viewof countries = Inputs.checkbox(["United States", "Canada"], {label: "Country", value: ["United States", "Canada"]})
 viewof yearFrom = Inputs.range([minYear, maxYear], {step: 1, value: minYear, label: "From"})
 viewof yearTo = Inputs.range([minYear, maxYear], {step: 1, value: maxYear, label: "To"})
@@ -75,6 +80,7 @@ viewof includeProbable = Inputs.toggle({label: "Include probable cases", value: 
 viewof measure = Inputs.radio(["Recall events", "Units recalled"], {label: "Count", value: "Recall events"})
 viewof view = Inputs.radio(["By hazard", "By failed part"], {label: "Chart", value: "By hazard"})
 viewof reset = Inputs.button("Reset all filters", {reduce: () => {
+  setInput(viewof query, "");
   setInput(viewof countries, ["United States", "Canada"]);
   setInput(viewof yearFrom, minYear);
   setInput(viewof yearTo, maxYear);
@@ -93,6 +99,9 @@ viewof reset = Inputs.button("Reset all filters", {reduce: () => {
 ```{ojs}
 //| output: false
 lo = Math.min(yearFrom, yearTo)
+
+// Search words: a notice must contain every word (in any order)
+terms = query.toLowerCase().split(/\s+/).filter(t => t.length)
 hi = Math.max(yearFrom, yearTo)
 
 // Does a notice pass the filters? "skip" leaves some filters out, so the
@@ -104,7 +113,8 @@ passes = (d, skip = []) =>
   (skip.includes("component") || component === "All" || d.failed_component === component) &&
   (skip.includes("hazard") || hazard === "All" || d.hazard_group === hazard) &&
   (!ebikeOnly || d.is_ebike_related) &&
-  (includeProbable || d.case_status === "confirmed")
+  (includeProbable || d.case_status === "confirmed") &&
+  terms.every(t => eventText.get(d.event_id).includes(t))
 
 // One row per recall event (the US notice, where there is one, comes first)
 uniqueEvents = rows => {
@@ -123,6 +133,17 @@ countryRows = uniqueEvents(data.filter(d => passes(d, ["country"]) && d.recall_y
 w = d => measure === "Recall events" ? 1 : (d.units_recalled ?? 0)
 measureLabel = measure === "Recall events" ? "recall events" : "units recalled"
 years = d3.range(lo, hi + 1)
+```
+
+```{ojs}
+{
+  if (!terms.length) return html``;
+  const clear = html`<button type="button" class="dash-clear">Clear search</button>`;
+  clear.onclick = () => setInput(viewof query, "");
+  const note = html`<div class="dash-search-note"><span>Showing recalls matching <strong>${query.trim()}</strong>. Counts reflect how much a company sells and how readily it recalls, as well as product safety, so they are not a safety ranking.</span></div>`;
+  note.append(clear);
+  return note;
+}
 ```
 
 ```{ojs}
@@ -346,14 +367,10 @@ listRows = filtered
   .sort((a, b) => b.year - a.year)
 ```
 
-```{ojs}
-viewof search = Inputs.search(listRows, {placeholder: "Search titles, parts, hazards...", label: "Search"})
-```
-
 ::: {.recall-table}
 
 ```{ojs}
-Inputs.table(search, {
+Inputs.table(listRows, {
   columns: ["year", "country", "title", "what", "part", "hazard"],
   header: {year: "Year", country: "Country", title: "Recall notice", what: "What was recalled", part: "Failed part", hazard: "Hazard"},
   format: {
@@ -369,7 +386,7 @@ Inputs.table(search, {
 :::
 
 ```{ojs}
-html`<p class="dash-note">Titles link to the official notice. Brand names appear only as published by the regulator. For joint recalls, the US notice is shown.</p>`
+html`<p class="dash-note">To search these notices, use <strong>Search notices</strong> at the top of the filters, so every panel updates together. Titles link to the official notice. Brand names appear only as published by the regulator. For joint recalls, the US notice is shown.</p>`
 ```
 
 ```{ojs}

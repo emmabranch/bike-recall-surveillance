@@ -58,7 +58,7 @@ Recalls are a regulator's response to a safety problem, so a collection of them 
 - **Validation.** The rules were checked against 100 hand-labelled records, with a further 40 held back as an independent test.
 - **Caveats.** Recalls are passively reported and negotiated, and regulations have changed over time. Those limits shape what these numbers can and cannot say.
 
-The analysis is industry-wide. It does not rank or compare companies. Brand names appear only in the searchable table, as they appear in the official notices.
+The analysis is industry-wide. It does not rank or compare companies. Brand names appear only as published in the official notices, and you can search for them on the dashboard.
 
 ## Key findings {#key-findings}
 
