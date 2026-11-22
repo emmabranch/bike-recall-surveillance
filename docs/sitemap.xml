@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://emmabranch.github.io/bike-recall-surveillance/methods.html</loc>
+    <lastmod>2026-11-22T04:38:44.037Z</lastmod>
+  </url>
+  <url>
     <loc>https://emmabranch.github.io/bike-recall-surveillance/dashboard.html</loc>
     <lastmod>2026-11-22T03:03:26.480Z</lastmod>
+  </url>
+  <url>
+    <loc>https://emmabranch.github.io/bike-recall-surveillance/ebikes.html</loc>
+    <lastmod>2026-11-22T03:15:03.678Z</lastmod>
   </url>
   <url>
     <loc>https://emmabranch.github.io/bike-recall-surveillance/index.html</loc>
@@ -13,16 +21,8 @@
     <lastmod>2026-11-22T03:06:19.091Z</lastmod>
   </url>
   <url>
-    <loc>https://emmabranch.github.io/bike-recall-surveillance/ebikes.html</loc>
-    <lastmod>2026-11-22T03:15:03.678Z</lastmod>
-  </url>
-  <url>
     <loc>https://emmabranch.github.io/bike-recall-surveillance/signals.html</loc>
     <lastmod>2026-11-22T04:33:56.236Z</lastmod>
-  </url>
-  <url>
-    <loc>https://emmabranch.github.io/bike-recall-surveillance/methods.html</loc>
-    <lastmod>2026-11-22T04:38:44.037Z</lastmod>
   </url>
   <url>
     <loc>https://emmabranch.github.io/bike-recall-surveillance/caveats.html</loc>
