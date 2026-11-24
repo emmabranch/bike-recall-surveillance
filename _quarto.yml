@@ -14,13 +14,17 @@ project:
     - data/bike_recalls.csv
     - data/bike_recalls.parquet
     - data/data_dictionary.csv
+    - images/motif.svg
 
 website:
   title: "Bike recall surveillance"
   site-url: https://emmabranch.github.io/bike-recall-surveillance/
   repo-url: https://github.com/emmabranch/bike-recall-surveillance
+  favicon: images/favicon.png
   description: "Bicycle, e-bike, and component recalls from US CPSC and Health Canada, analysed with public health surveillance methods."
   navbar:
+    logo: images/motif.svg
+    logo-alt: ""
     left:
       - href: index.qmd
         text: Overview

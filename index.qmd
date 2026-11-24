@@ -11,6 +11,10 @@ source(here::here("R", "site_setup.R"))
 
 ::::: {.hero-full .column-screen}
 
+```{=html}
+<img class="hero-motif" src="images/motif.svg" alt="">
+```
+
 ```{r hero-bg}
 #| output: asis
 cat(hero_stripes(events, last_full_year))
@@ -29,10 +33,6 @@ Every bicycle, e-bike, and component recall published by the US Consumer Product
 [Background: one stripe per year since 2000, brighter in years with more recall events. Data: US CPSC (from 2000) and Health Canada (from 2008).]{.hero-note}
 
 ::::
-
-```{=html}
-<svg class="hero-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0,40 C240,80 480,0 720,30 C960,60 1200,10 1440,40 L1440,80 L0,80 Z"></path></svg>
-```
 
 :::::
 
