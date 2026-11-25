@@ -39,6 +39,12 @@ ojs_define(
 
 ```{ojs}
 //| output: false
+// Shared chart settings from the brand kit (colours, ebPlot, Space Mono axes)
+import {eb, ebPlot, ebCatFill} from "./js/eb_charts.js"
+```
+
+```{ojs}
+//| output: false
 data = transpose(recs)
 maxYear = [].concat(meta.maxYear)[0]
 minYear = [].concat(meta.minYear)[0]
@@ -46,7 +52,7 @@ lastUpdated = [].concat(meta.lastUpdated)[0]
 forms = [].concat(meta.forms)
 components = [].concat(meta.components)
 hazards = [].concat(meta.hazards)
-hazardColors = ["#2a78d6", "#eb6834", "#1baf7a", "#6250d6"]
+hazardColors = ebCatFill.slice(0, 4)   // cobalt, tomato, sunflower, kelp
 fmtN = d3.format(",")
 
 // Set a filter control from code (used by the heatmap and the reset button)
@@ -198,7 +204,7 @@ html`<div class="dash-chart-title">${view === "By hazard"
 ```{ojs}
 {
   if (view === "By hazard") {
-    const fig = Plot.plot({
+    const fig = ebPlot(Plot, {
       width,
       height: 380,
       marginLeft: 56,
@@ -210,11 +216,11 @@ html`<div class="dash-chart-title">${view === "By hazard"
         Plot.rectY(byHazard, {
           x: "year", interval: 1, y: "value", fill: "hazard",
           fillOpacity: d => d.year === maxYear ? 0.45 : 1,
-          insetLeft: 1, insetRight: 1,
+          insetLeft: 1, insetRight: 1, stroke: eb.ink, strokeWidth: 0.5,
           tip: true,
           title: d => `${d.year}${d.year === maxYear ? " (partial year)" : ""}\n${d.hazard}: ${fmtN(Math.round(d.value))} ${measureLabel}`
         }),
-        Plot.lineY(rolling, {x: d => d.year + 0.5, y: "avg", stroke: "#0b2233", strokeWidth: 2, curve: "monotone-x"}),
+        Plot.lineY(rolling, {x: d => d.year + 0.5, y: "avg", stroke: eb.ink, strokeWidth: 2, curve: "monotone-x"}),
         Plot.ruleY([0])
       ]
     });
@@ -227,13 +233,13 @@ html`<div class="dash-chart-title">${view === "By hazard"
   for (const c of components) {
     const rows = byPart.filter(d => d.component === c);
     const total = d3.sum(rows, d => d.value);
-    const p = Plot.plot({
+    const p = ebPlot(Plot, {
       width: 300, height: 130, marginLeft: 40, marginTop: 8,
       x: {domain: [lo, hi + 1], tickFormat: "d", ticks: 4, label: null},
       y: {domain: [0, maxV], ticks: 3, label: null, grid: true, tickFormat: "~s"},
       marks: [
         Plot.rectY(rows, {
-          x: "year", interval: 1, y: "value", fill: "#1f4e79",
+          x: "year", interval: 1, y: "value", fill: "#e3c600", stroke: eb.ink, strokeWidth: 0.4,
           fillOpacity: d => d.year === maxYear ? 0.45 : 1,
           insetLeft: 0.5, insetRight: 0.5,
           tip: true,
@@ -272,7 +278,7 @@ html`<p class="dash-note">Each cell counts ${measureLabel} for one failed part a
     counts.set(k, (counts.get(k) ?? 0) + w(d));
   }
   const maxV = d3.max(counts.values()) || 1;
-  const color = d3.scaleSequential([0, maxV], d3.interpolateBlues);
+  const color = d3.scaleSequential([0, maxV], d3.interpolateRgbBasis(["#F3EEE3", "#8A9BEA", "#2340FF", "#141F80"]));
   const table = html`<table class="heat">
     <thead><tr><th></th>${hazards.map(h => html`<th scope="col">${h}</th>`)}</tr></thead>
     <tbody></tbody>
@@ -285,7 +291,7 @@ html`<p class="dash-note">Each cell counts ${measureLabel} for one failed part a
       const selected = component === c && hazard === h;
       const td = html`<td tabindex="0">${v ? fmtN(Math.round(v)) : ""}</td>`;
       td.style.background = v ? color(Math.max(v, maxV * 0.12)) : "#ffffff";
-      td.style.color = v > maxV * 0.5 ? "#ffffff" : "#1f2a33";
+      td.style.color = v > maxV * 0.5 ? "#ffffff" : "#111111";
       td.title = `${c}, ${h}: ${fmtN(Math.round(v))} ${measureLabel}`;
       if (selected) td.classList.add("selected");
       const pick = () => {
@@ -313,7 +319,7 @@ html`<p class="dash-note">${measure} per year since 2008, when Canadian records 
 ```{ojs}
 {
   const cats = ["US only", "Joint (both countries)", "Canada only"];
-  const catColors = ["#2a78d6", "#1baf7a", "#eb6834"];
+  const catColors = ["#2340FF", "#B9A4FF", "#FF5A36"];   // US cobalt, joint lilac, Canada tomato
   const yrs = d3.range(Math.max(lo, 2008), hi + 1);
   if (!yrs.length) return html`<p class="dash-note">Choose years from 2008 onward to compare the two countries.</p>`;
   const cat = d => {
@@ -325,7 +331,7 @@ html`<p class="dash-note">${measure} per year since 2008, when Canadian records 
     year: y, cat: k,
     value: d3.sum(countryRows.filter(d => d.recall_year === y && cat(d) === k), w)
   })));
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height: 300,
     marginLeft: 56,
@@ -336,7 +342,7 @@ html`<p class="dash-note">${measure} per year since 2008, when Canadian records 
       Plot.rectY(rows, {
         x: "year", interval: 1, y: "value", fill: "cat", order: cats,
         fillOpacity: d => d.year === maxYear ? 0.45 : 1,
-        insetLeft: 1, insetRight: 1,
+        insetLeft: 1, insetRight: 1, stroke: eb.ink, strokeWidth: 0.5,
         tip: true,
         title: d => `${d.year}${d.year === maxYear ? " (partial year)" : ""}\n${d.cat}: ${fmtN(Math.round(d.value))} ${measureLabel}`
       }),

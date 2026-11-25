@@ -112,6 +112,12 @@ Across all `r n_tests` series-year comparisons since 2005, `r n_signal` are Sign
 
 ```{ojs}
 //| output: false
+// Shared chart settings from the brand kit (colours, ebPlot, Space Mono axes)
+import {eb, ebPlot, ebCatFill} from "./js/eb_charts.js"
+```
+
+```{ojs}
+//| output: false
 rows = transpose(sig)
 sm = ({
   series: [].concat(smeta.series),
@@ -183,20 +189,20 @@ viewof chosen = Inputs.select(sm.series, {label: "Series", value: "All bicycle r
 ```{ojs}
 {
   const d = rows.filter(r => r.name === chosen && !r.is_ytd);
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width: Math.min(width, 860),
     height: 320,
     marginLeft: 48,
     x: {label: null, tickFormat: "d"},
     y: {label: "US recall notices per year", grid: true},
     marks: [
-      Plot.areaY(d, {x: "year", y1: 0, y2: "limit99", fill: "#e8edf1", curve: "step"}),
-      Plot.lineY(d, {x: "year", y: "limit95", stroke: "#9aa5ae", strokeDasharray: "4,3", curve: "step"}),
-      Plot.lineY(d, {x: "year", y: "expected", stroke: "#5b7083", strokeWidth: 1.5}),
-      Plot.lineY(d, {x: "year", y: "observed", stroke: "#1f4e79", strokeWidth: 2}),
+      Plot.areaY(d, {x: "year", y1: 0, y2: "limit99", fill: "#E4DDCF", curve: "step"}),
+      Plot.lineY(d, {x: "year", y: "limit95", stroke: eb.muted, strokeDasharray: "4,3", curve: "step"}),
+      Plot.lineY(d, {x: "year", y: "expected", stroke: "#8C8373", strokeWidth: 1.5}),
+      Plot.lineY(d, {x: "year", y: "observed", stroke: eb.ink, strokeWidth: 2}),
       Plot.dot(d, {
         x: "year", y: "observed", r: d => d.status === "Expected" ? 3.5 : 6,
-        fill: d => d.status === "Signal" ? "#c0392b" : d.status === "Watch" ? "#e3a400" : "#1f4e79",
+        fill: d => d.status === "Signal" ? "#A3241A" : d.status === "Watch" ? "#FFC73A" : eb.ink,
         stroke: "#ffffff", strokeWidth: 1.5,
         tip: true,
         title: d => `${d.year}: ${d.observed} observed, ${fmt1(d.expected)} expected\nWatch above ${d.limit95}, Signal above ${d.limit99}\n${d.status}`

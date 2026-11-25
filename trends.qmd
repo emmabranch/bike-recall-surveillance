@@ -72,13 +72,19 @@ ojs_define(
 
 ```{ojs}
 //| output: false
+// Shared chart settings from the brand kit (colours, ebPlot, Space Mono axes)
+import {eb, ebPlot, ebCatFill} from "./js/eb_charts.js"
+```
+
+```{ojs}
+//| output: false
 tm = ({
   thisYear: [].concat(tmeta.thisYear)[0],
   pEarly: [].concat(tmeta.pEarly)[0],
   pLate: [].concat(tmeta.pLate)[0],
   p5: [].concat(tmeta.p5)
 })
-periodColors = ["#eb6834", "#2a78d6"]
+periodColors = ["#FF5A36", "#2340FF"]
 
 dumbbell = (long, height) => {
   const rows = transpose(long);
@@ -86,7 +92,7 @@ dumbbell = (long, height) => {
   const early = new Map(rows.filter(d => d.period === tm.pEarly).map(d => [d.value, d.share]));
   const cats = [...new Set(rows.map(d => d.value))].sort((a, b) => (late.get(b) ?? 0) - (late.get(a) ?? 0));
   const pairs = cats.map(c => ({value: c, early: early.get(c) ?? 0, late: late.get(c) ?? 0}));
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height,
     marginLeft: 250,
@@ -95,9 +101,9 @@ dumbbell = (long, height) => {
     y: {label: null, domain: cats},
     color: {domain: [tm.pEarly, tm.pLate], range: periodColors, legend: true},
     marks: [
-      Plot.ruleY(pairs, {y: "value", x1: "early", x2: "late", stroke: "#b9c3cb", strokeWidth: 2}),
+      Plot.ruleY(pairs, {y: "value", x1: "early", x2: "late", stroke: eb.context, strokeWidth: 2}),
       Plot.dot(rows, {
-        x: "share", y: "value", fill: "period", r: 6, stroke: "#ffffff", strokeWidth: 2,
+        x: "share", y: "value", fill: "period", r: 6, stroke: eb.ink, strokeWidth: 1.5,
         tip: true,
         title: d => `${d.value}\n${d.period}: ${Math.round(100 * d.share)}% (${d.n} events)`
       })
@@ -116,13 +122,13 @@ A useful first question in surveillance is whether the count itself is changing.
 ```{ojs}
 {
   const rows = transpose(yearly);
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height: 340,
     marginLeft: 48,
     x: {label: null, tickFormat: "d"},
     y: {label: "Recall notices per year", grid: true},
-    color: {domain: ["United States", "Canada"], range: ["#2a78d6", "#eb6834"], legend: true},
+    color: {domain: ["United States", "Canada"], range: ["#2340FF", "#E0431B"], legend: true},
     marks: [
       Plot.dot(rows, {
         x: "recall_year", y: "n", fill: "country", r: 3.5, fillOpacity: 0.35,
@@ -170,17 +176,17 @@ For most of this period, bicycle recalls were about falls. Fire and burn hazards
 ```{ojs}
 {
   const rows = transpose(fire);
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height: 300,
     marginLeft: 48,
     x: {label: null, domain: tm.p5},
     y: {label: "Fire or burn recall events", grid: true},
-    color: {domain: ["Other bicycle products", "E-bike related"], range: ["#2a78d6", "#eb6834"], legend: true},
+    color: {domain: ["Other bicycle products", "E-bike related"], range: ["#2340FF", "#FF5A36"], legend: true},
     marks: [
       Plot.barY(rows, {
         x: "period", y: "n", fill: "group", order: ["Other bicycle products", "E-bike related"],
-        insetLeft: 4, insetRight: 4,
+        insetLeft: 4, insetRight: 4, stroke: eb.ink, strokeWidth: 0.5,
         tip: true,
         title: d => `${d.period}\n${d.group}: ${d.n} recall events`
       }),

@@ -55,12 +55,18 @@ ojs_define(
 
 ```{ojs}
 //| output: false
+// Shared chart settings from the brand kit (colours, ebPlot, Space Mono axes)
+import {eb, ebPlot, ebCatFill} from "./js/eb_charts.js"
+```
+
+```{ojs}
+//| output: false
 em = ({
   thisYear: [].concat(emeta.thisYear)[0],
   hazards: [].concat(emeta.hazards),
   p5: [].concat(emeta.p5)
 })
-hazardColors = ["#2a78d6", "#eb6834", "#1baf7a", "#6250d6"]
+hazardColors = ebCatFill.slice(0, 4)   // cobalt, tomato, sunflower, kelp
 milestones = [
   {x: 2021.09, label: "1"},
   {x: 2024.20, label: "2"},
@@ -75,7 +81,7 @@ The first e-bike recall in these records is from `r first_eb`. For most of the n
 ```{ojs}
 {
   const rows = transpose(ebYear);
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height: 340,
     marginLeft: 48,
@@ -87,12 +93,12 @@ The first e-bike recall in these records is from `r first_eb`. For most of the n
       Plot.rectY(rows, {
         x: "recall_year", interval: 1, y: "n", fill: "hazard_group",
         fillOpacity: d => d.recall_year === em.thisYear ? 0.45 : 1,
-        insetLeft: 1, insetRight: 1,
+        insetLeft: 1, insetRight: 1, stroke: eb.ink, strokeWidth: 0.5,
         tip: true,
         title: d => `${d.recall_year}${d.recall_year === em.thisYear ? " (partial year)" : ""}\n${d.hazard_group}: ${d.n}`
       }),
-      Plot.ruleX(milestones, {x: "x", stroke: "#0b2233", strokeDasharray: "3,3"}),
-      Plot.text(milestones, {x: "x", text: "label", frameAnchor: "top", dy: -14, fontWeight: 700, fill: "#0b2233"}),
+      Plot.ruleX(milestones, {x: "x", stroke: eb.ink, strokeDasharray: "3,3"}),
+      Plot.text(milestones, {x: "x", text: "label", frameAnchor: "top", dy: -14, fontWeight: 700, fill: eb.ink}),
       Plot.ruleY([0])
     ]
   });
@@ -109,7 +115,7 @@ As a share of all bicycle recalls, e-bikes went from `r pct(share_first)` in 200
 ```{ojs}
 {
   const rows = transpose(ebShare);
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height: 260,
     marginLeft: 48,
@@ -117,7 +123,7 @@ As a share of all bicycle recalls, e-bikes went from `r pct(share_first)` in 200
     y: {label: "Share of all recall events", tickFormat: "%", grid: true},
     marks: [
       Plot.barY(rows, {
-        x: "period", y: "share", fill: "#1f4e79", insetLeft: 6, insetRight: 6,
+        x: "period", y: "share", fill: "#e3c600", stroke: eb.ink, strokeWidth: 0.5, insetLeft: 6, insetRight: 6,
         tip: true,
         title: d => `${d.period}\n${d.ebike} of ${d.all} recall events (${Math.round(100 * d.share)}%)`
       }),
@@ -144,18 +150,18 @@ E-bikes inherit every failure a conventional bike can have, and add one of their
   const ot = new Map(rows.filter(d => d.group === groups[0]).map(d => [d.value, d.share]));
   const cats = [...new Set(rows.map(d => d.value))].sort((a, b) => (eb.get(b) ?? 0) - (eb.get(a) ?? 0));
   const pairs = cats.map(c => ({value: c, a: ot.get(c) ?? 0, b: eb.get(c) ?? 0}));
-  const fig = Plot.plot({
+  const fig = ebPlot(Plot, {
     width,
     height: 420,
     marginLeft: 250,
     marginRight: 20,
     x: {label: "Share of recall events in each group", tickFormat: "%", grid: true},
     y: {label: null, domain: cats},
-    color: {domain: groups, range: ["#2a78d6", "#eb6834"], legend: true},
+    color: {domain: groups, range: ["#2340FF", "#FF5A36"], legend: true},
     marks: [
-      Plot.ruleY(pairs, {y: "value", x1: "a", x2: "b", stroke: "#b9c3cb", strokeWidth: 2}),
+      Plot.ruleY(pairs, {y: "value", x1: "a", x2: "b", stroke: eb.context, strokeWidth: 2}),
       Plot.dot(rows, {
-        x: "share", y: "value", fill: "group", r: 6, stroke: "#ffffff", strokeWidth: 2,
+        x: "share", y: "value", fill: "group", r: 6, stroke: eb.ink, strokeWidth: 1.5,
         tip: true,
         title: d => `${d.value}\n${d.group}: ${Math.round(100 * d.share)}% (${d.n} events)`
       })

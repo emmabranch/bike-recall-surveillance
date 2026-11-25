@@ -15,6 +15,7 @@ project:
     - data/bike_recalls.parquet
     - data/data_dictionary.csv
     - images/motif.svg
+    - js/eb_charts.js
 
 website:
   title: "Bike recall surveillance"
